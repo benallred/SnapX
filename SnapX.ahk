@@ -20,6 +20,12 @@ ProgramTitle := "SnapX"
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Script Startup
 
+if not A_IsAdmin
+{
+	Run *RunAs "%A_ScriptFullPath%"
+	ExitApp
+}
+
 SoundPlay *64
 TrayTip, % ProgramTitle, Loaded, 1
 
