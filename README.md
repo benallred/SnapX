@@ -25,6 +25,36 @@ I like the built-in Snap but needed something with more options when I got a 34"
 	*	If snapped, decrease snap width by 1
 	*	If snapped and current width is 1, restore
 
+####Detailed states and actions####
+```
+Key
+	|   |   |   |   | (monitor with four snap positions)
+	x (position of snapped window)
+	r (restored window)
+	m (minimized window)
+	| x | x |   |   | (ex: window snapped left with width = 2)
+
+Starting position     Win+Left              Win+Right             Win+Up                Win+Down
+| r |   |   |   |     | x |   |   |   |     |   | x |   |   |     | x | x |   |   |     |       m       |
+|   | r |   |   |     |   | x |   |   |     |   |   | x |   |     |   | x | x |   |     |       m       |
+|   |   | r |   |     |   | x |   |   |     |   |   | x |   |     |   |   | x | x |     |       m       |
+|   |   |   | r |     |   |   | x |   |     |   |   |   | x |     |   |   | x | x |     |       m       |
+
+| x |   |   |   |         unchanged         |   | x |   |   |     | x | x |   |   |     | r |   |   |   |
+|   | x |   |   |     | x |   |   |   |     |   |   | x |   |     |   | x | x |   |     |   | r |   |   |
+|   |   | x |   |     |   | x |   |   |     |   |   |   | x |     |   |   | x | x |     |   |   | r |   |
+|   |   |   | x |     |   |   | x |   |         unchanged         |   |   | x | x |     |   |   |   | r |
+
+| x | x |   |   |         unchanged         |   | x | x |   |     | x | x | x |   |     | x |   |   |   |
+|   | x | x |   |     | x | x |   |   |     |   |   | x | x |     |   | x | x | x |     |   | x |   |   |
+|   |   | x | x |     |   | x | x |   |         unchanged         |   | x | x | x |     |   |   | x |   |
+
+| x | x | x |   |         unchanged         |   | x | x | x |     | x | x | x | x |     | x | x |   |   |
+|   | x | x | x |     | x | x | x |   |         unchanged         | x | x | x | x |     |   | x | x |   |
+
+| x | x | x | x |         unchanged             unchanged             unchanged         | x | x | x |   |
+```
+
 ####Credits####
 
 *	[Windy](https://github.com/hoppfrosch/AHK_Windy)
