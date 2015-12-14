@@ -78,42 +78,78 @@ MoveWindow(horizontalDirection, horizontalSize)
 	widthFactor := mony.workingArea.w / horizontalSections
 	heightFactor := mony.workingArea.h / 1
 	
+	; state: minimized
 	if (minMaxState < 0)
 	{
+		; action: win+up
 		if (horizontalSize > 0)
 		{
 			WinRestore, A
 		}
-		return
-	}
-	else if (horizontalSize < 0)
-	{
-		if (windy.snap.snapped == 0)
-		{
-			WinMinimize, A
-			return
-		}
-		else if (minMaxState == 1)
-		{
-			WinRestore, A
-			return
-		}
-	}
-	else if (horizontalSize > 0 && windy.snap.width >= horizontalSections - 1)
-	{
-		WinMaximize, A
+		; action: anything else
 		return
 	}
 	
-	if windy.snap.snapped == 1
+	; state: maximized
+	else if (minMaxState > 0)
 	{
+		; action: win+down
+		if (horizontalSize < 0)
+		{
+			WinRestore, A
+		}
+		; action: anything else
+		return
+	}
+	
+	; state: snapped
+	else if (windy.snap.snapped == 1)
+	{
+		; state: width == max - 1
+		if (windy.snap.width >= horizontalSections - 1)
+		{
+			; action: win+up
+			if (horizontalSize > 0)
+			{
+				WinMaximize, A
+				return
+			}
+			; action: anything else
+			; (continue)
+		}
+		
+		; state: width == 1
+		if (windy.snap.width == 1)
+		{
+			; action: win+down
+			if (horizontalSize < 0)
+			{
+				windy.snap.snapped := 0
+				WinMove, A, , windy.snap.pre.left, windy.snap.pre.top, windy.snap.pre.width, windy.snap.pre.height ; "restore" from snapped state
+				return
+			}
+			; action: anything else
+			; (continue)
+		}
+		
+		; action: all
 		windy.snap.left := windy.snap.left + horizontalDirection
 		windy.snap.top := 0
 		windy.snap.width := windy.snap.width + horizontalSize
 		windy.snap.height := 1
 	}
-	else
+	
+	; state: restored
+	else if (windy.snap.snapped == 0)
 	{
+		; action: win+down
+		if (horizontalSize < 0)
+		{
+			WinMinimize, A
+			return
+		}
+		
+		; action: anything else
 		windy.snap.snapped := 1
 		windy.snap.left := Floor((windy.centercoords.x - mony.boundary.xul) / mony.workingArea.w * horizontalSections)
 		windy.snap.top := 0
@@ -125,6 +161,8 @@ MoveWindow(horizontalDirection, horizontalSize)
 		windy.snap.pre.height := windy.posSize.h
 	}
 	
+	; Enforce snap boundaries
+	
 	if windy.snap.left + windy.snap.width > horizontalSections
 	{
 		windy.snap.left := windy.snap.left - 1
@@ -135,25 +173,11 @@ MoveWindow(horizontalDirection, horizontalSize)
 		windy.snap.left := 0
 	}
 	
-	if windy.snap.width < 1
-	{
-		windy.snap.width := 1
-		windy.snap.snapped := 0
-	}
-	
-	if windy.snap.left >= horizontalSections
-	{
-		windy.snap.left := horizontalSections - 1
-	}
-	
-	if windy.snap.snapped
-	{
-		WinMove, A, , windy.snap.left * widthFactor + xOffset + mony.boundary.xul, windy.snap.top * heightFactor + mony.boundary.yul, windy.snap.width * widthFactor + -2*xOffset, windy.snap.height * heightFactor + -1*xOffset ; + -2*yOffset + 1
-	}
-	else
-	{
-		WinMove, A, , windy.snap.pre.left, windy.snap.pre.top, windy.snap.pre.width, windy.snap.pre.height
-	}
+	; Move/resize snap
+	WinMove, A, , windy.snap.left   * widthFactor  +    xOffset + mony.boundary.xul
+					, windy.snap.top    * heightFactor              + mony.boundary.yul
+					, windy.snap.width  * widthFactor  + -2*xOffset
+					, windy.snap.height * heightFactor + -1*xOffset ; + -2*yOffset + 1
 }
 
 ExitFunc(exitReason, exitCode)
