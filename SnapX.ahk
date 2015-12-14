@@ -151,7 +151,24 @@ MoveWindow(horizontalDirection, horizontalSize)
 		
 		; action: anything else
 		windy.snap.snapped := 1
-		windy.snap.left := Floor((windy.centercoords.x - mony.boundary.xul) / mony.workingArea.w * horizontalSections)
+; Snap based on left/right edges and left/right direction pushed
+		windy.snap.left := Floor(((horizontalDirection < 0 ? windy.posSize.xul : horizontalDirection > 0 ? windy.posSize.xlr : windy.centercoords.x) - mony.boundary.xul) / mony.workingArea.w * horizontalSections)
+; Original - Snap based on center coordinates
+;		windy.snap.left := Floor((windy.centercoords.x - mony.boundary.xul) / mony.workingArea.w * horizontalSections)
+; Always snaps to current centercoords position, regardless of snap direction pushed
+;		(do nothing more)
+; Does not snap to current centercoords position - always left or right of current centercoords (unless against edge, of course)
+;		windy.snap.left := windy.snap.left + horizontalDirection
+; Shift one more snap direction if starting snap position is on opposite side of the screen from indicated direction
+;		windy.snap.left := windy.snap.left
+;									+ ((horizontalSections - 1) / 2 - windy.snap.left > 0 == horizontalDirection > 0 ; if snap position is on the opposite side of the screen as horizontal direction pushed (snap is 0 or 1 and win+right pushed; or snap is 2 or 3 and win+left pushed)
+;										|| (horizontalSections - 1) / 2 - windy.snap.left == 0 ; or if snap position is exact center (forward-compatibility for allowing horizontalSections == 3 (or any odd number))
+;										 ? horizontalDirection ; shift one more snap indicated direction
+;										 : 0)
+; Always snap against edge in direction pushed
+;		windy.snap.left := horizontalDirection < 0 ? 0 : horizontalDirection > 0 ? horizontalSections - 1 : windy.snap.left
+; Always snap against center edge in direction pushed
+;		windy.snap.left := horizontalDirection < 0 ? horizontalSections // 2 - 1 : horizontalDirection > 0 ? (horizontalSections + 1) // 2 : windy.snap.left
 		windy.snap.top := 0
 		windy.snap.width := 1 + horizontalSize
 		windy.snap.height := 1
