@@ -137,6 +137,7 @@ MoveWindow(horizontalDirection, horizontalSize)
 		
 		; action: all
 		windy.snap.left := windy.snap.left + horizontalDirection
+		windy.snap.left := windy.snap.left + (horizontalSize < 0 && windy.snap.left + windy.snap.width >= horizontalSections ? 1 : 0) ; keep right edge attached to monitor edge if shrinking
 		windy.snap.top := 0
 		windy.snap.width := windy.snap.width + horizontalSize
 		windy.snap.height := 1
