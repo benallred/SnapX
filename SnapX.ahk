@@ -65,8 +65,8 @@ MoveWindow(horizontalDirection, horizontalSize)
 	{
 		windy := new Windy(activeWindowHandle)
 		; snap.left is in grid coordinates
-		; snap.pre.left is in pixels
-		windy.snap := { snapped:0, left:0, top:0, width:0, height:0, pre:{ left:0, top:0, width:0, height:0 } }
+		; snap.pre.left is in percentage of monitor
+		windy.snap := { snapped:0, left:0, top:0, width:0, height:0, pre:{ left:0.0, top:0.0, width:0.0, height:0.0 } }
 		index := TrackedWindows.Push(windy)
 	}
 	
@@ -125,7 +125,10 @@ MoveWindow(horizontalDirection, horizontalSize)
 			if (horizontalSize < 0)
 			{
 				windy.snap.snapped := 0
-				WinMove, A, , windy.snap.pre.left, windy.snap.pre.top, windy.snap.pre.width, windy.snap.pre.height ; "restore" from snapped state
+				WinMove, A, , windy.snap.pre.left   * mony.workingArea.w + mony.boundary.xul
+								, windy.snap.pre.top    * mony.workingArea.h + mony.boundary.yul
+								, windy.snap.pre.width  * mony.workingArea.w
+								, windy.snap.pre.height * mony.workingArea.h ; "restore" from snapped state
 				return
 			}
 			; action: anything else
@@ -172,10 +175,10 @@ MoveWindow(horizontalDirection, horizontalSize)
 		windy.snap.top := 0
 		windy.snap.width := 1 + horizontalSize
 		windy.snap.height := 1
-		windy.snap.pre.left := windy.posSize.x
-		windy.snap.pre.top := windy.posSize.y
-		windy.snap.pre.width := windy.posSize.w
-		windy.snap.pre.height := windy.posSize.h
+		windy.snap.pre.left   := (windy.posSize.x - mony.boundary.xul) / mony.workingArea.w
+		windy.snap.pre.top    := (windy.posSize.y - mony.boundary.yul) / mony.workingArea.h
+		windy.snap.pre.width  :=  windy.posSize.w                      / mony.workingArea.w
+		windy.snap.pre.height :=  windy.posSize.h                      / mony.workingArea.h
 	}
 	
 	; Enforce snap boundaries
@@ -204,7 +207,15 @@ ExitFunc(exitReason, exitCode)
 	TrayTip, % ProgramTitle, Resetting snapped windows to their pre-snap size and position
 	for i, windy in TrackedWindows
 	{
-		WinMove, % "ahk_id " windy.hwnd, , windy.snap.pre.left, windy.snap.pre.top, windy.snap.pre.width, windy.snap.pre.height
+		; state: snapped
+		if (windy.snap.snapped == 1)
+		{
+			mony := new Mony(windy.monitorID)
+			WinMove, % "ahk_id " windy.hwnd, , windy.snap.pre.left   * mony.workingArea.w + mony.boundary.xul
+														, windy.snap.pre.top    * mony.workingArea.h + mony.boundary.yul
+														, windy.snap.pre.width  * mony.workingArea.w
+														, windy.snap.pre.height * mony.workingArea.h ; "restore" from snapped state
+		}
 	}
 }
 
