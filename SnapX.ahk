@@ -281,8 +281,8 @@ ChangeButtonNames_HorizontalSections:
 		return
 	SetTimer, ChangeButtonNames_HorizontalSections, Off
 	WinActivate
-	ControlSetText, Button1, 4
-	ControlSetText, Button2, 3
+	ControlSetText, Button1, &4
+	ControlSetText, Button2, &3
 return
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

@@ -25,6 +25,9 @@ I like the built-in Snap but needed something with more options when I got a 34"
 	*	If snapped, decrease snap width by 1
 	*	If snapped and current width is 1, restore
 
+####Settings####
+Settings are configurable on first run and from an .ini file thereafter.
+
 ####Detailed states and actions####
 ```
 Key
