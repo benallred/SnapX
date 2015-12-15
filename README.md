@@ -47,17 +47,18 @@ Starting position     Win+Left              Win+Right             Win+Up        
 
 | x | x |   |   |         unchanged         |   | x | x |   |     | x | x | x |   |     | x |   |   |   |
 |   | x | x |   |     | x | x |   |   |     |   |   | x | x |     |   | x | x | x |     |   | x |   |   |
-|   |   | x | x |     |   | x | x |   |         unchanged         |   | x | x | x |     |   |   | x |   |
+|   |   | x | x |     |   | x | x |   |         unchanged         |   | x | x | x |     |   |   |   | x |
 
 | x | x | x |   |         unchanged         |   | x | x | x |     | x | x | x | x |     | x | x |   |   |
-|   | x | x | x |     | x | x | x |   |         unchanged         | x | x | x | x |     |   | x | x |   |
+|   | x | x | x |     | x | x | x |   |         unchanged         | x | x | x | x |     |   |   | x | x |
 
-| x | x | x | x |         unchanged             unchanged             unchanged         | x | x | x |   |
+| x | x | x | x |         unchanged             unchanged             unchanged         | x | x | x |   | (depending on previous position)
+| x | x | x | x |         unchanged             unchanged             unchanged         |   | x | x | x | (depending on previous position)
 ```
 
 ####Credits####
 
-*	[Windy](https://github.com/hoppfrosch/AHK_Windy)
+*	[Const_WinUser](https://github.com/hoppfrosch/AHK_Windy/blob/master/lib/Windy/Const_WinUser.ahk)
 *	[WinGetPosEx](https://autohotkey.com/boards/viewtopic.php?t=3392)
 
 --------------------------------------------------

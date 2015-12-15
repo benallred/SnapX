@@ -5,7 +5,7 @@ SendMode Input  ; Recommended for new scripts due to its superior speed and reli
 SetWorkingDir %A_ScriptDir%  ; Ensures a consistent starting directory.
 
 #include Include\WinGetPosEx.ahk
-#include Include\Windy\Windy.ahk
+#include Include\Const_WinUser.ahk
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Notes
@@ -31,12 +31,12 @@ TrayTip, % ProgramTitle, Loaded, 1
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-global DebugInfo
-CreateDebugWindow()
+;global DebugInfo
+;CreateDebugWindow()
 
 TrackedWindows := []
 
-;OnExit("ExitFunc")
+OnExit("ExitFunc")
 
 #`::Reload ; for ease of testing during development
 
@@ -54,36 +54,38 @@ MoveWindow(horizontalDirection, horizontalSize)
 	
 	WinGet, activeWindowHandle, ID, A
 	
-	isRealWindow := windy.__isWindow(activeWindowHandle)
-	if (isRealWindow == 0)
+	WinGet, activeWindowStyle, Style, A
+	
+	if (!(activeWindowStyle & WS.SIZEBOX)) ; if window is not resizable
 	{
 		return
 	}
 
-	index := IndexOf(TrackedWindows, activeWindowHandle, "hwnd")
+	index := IndexOf(TrackedWindows, activeWindowHandle, "handle")
 	if index < 1
 	{
-		windy := new Windy(activeWindowHandle)
-		; snap.left is in grid coordinates
-		; snap.pre.left is in percentage of monitor
-		windy.snap := { snapped:0, left:0, top:0, width:0, height:0, pre:{ left:0.0, top:0.0, width:0.0, height:0.0 } }
-		index := TrackedWindows.Push(windy)
+		window := new SnapWindow(activeWindowHandle)
+		index := TrackedWindows.Push(window)
 	}
 	
-	windy := TrackedWindows[index]
-	mony := new Mony(windy.monitorID)
-	WinGetPosEx(activeWindowHandle, , , , , xOffset, yOffset)
+	window := TrackedWindows[index]
+	
+	monitorId := GetMonitorId(window.handle)
+	mon := new SnapMonitor(monitorId)
+	
 	WinGet, minMaxState, MinMax, A
 	horizontalSections := 4
-	widthFactor := mony.workingArea.w / horizontalSections
-	heightFactor := mony.workingArea.h / 1
+	widthFactor := mon.workarea.w / horizontalSections
+	heightFactor := mon.workarea.h / 1
 	
 	; state: minimized
 	if (minMaxState < 0)
 	{
+Debug("state: minimized")
 		; action: win+up
 		if (horizontalSize > 0)
 		{
+Debug("   action: restore")
 			WinRestore, A
 		}
 		; action: anything else
@@ -93,9 +95,11 @@ MoveWindow(horizontalDirection, horizontalSize)
 	; state: maximized
 	else if (minMaxState > 0)
 	{
+Debug("state: maximized")
 		; action: win+down
 		if (horizontalSize < 0)
 		{
+Debug("   action: restore snapped")
 			WinRestore, A
 		}
 		; action: anything else
@@ -103,14 +107,16 @@ MoveWindow(horizontalDirection, horizontalSize)
 	}
 	
 	; state: snapped
-	else if (windy.snap.snapped == 1)
+	else if (window.snapped == 1)
 	{
+Debug("state: snapped")
 		; state: width == max - 1
-		if (windy.snap.width >= horizontalSections - 1)
+		if (window.grid.width >= horizontalSections - 1)
 		{
 			; action: win+up
 			if (horizontalSize > 0)
 			{
+Debug("   action: maximize")
 				WinMaximize, A
 				return
 			}
@@ -119,16 +125,17 @@ MoveWindow(horizontalDirection, horizontalSize)
 		}
 		
 		; state: width == 1
-		if (windy.snap.width == 1)
+		if (window.grid.width == 1)
 		{
 			; action: win+down
 			if (horizontalSize < 0)
 			{
-				windy.snap.snapped := 0
-				WinMove, A, , windy.snap.pre.left   * mony.workingArea.w + mony.boundary.xul
-								, windy.snap.pre.top    * mony.workingArea.h + mony.boundary.yul
-								, windy.snap.pre.width  * mony.workingArea.w
-								, windy.snap.pre.height * mony.workingArea.h ; "restore" from snapped state
+Debug("   action: restore unsnapped")
+				window.snapped := 0
+				WinMove, A, , window.restoredpos.left   * mon.workarea.w + mon.area.x
+								, window.restoredpos.top    * mon.workarea.h + mon.area.y
+								, window.restoredpos.width  * mon.workarea.w
+								, window.restoredpos.height * mon.workarea.h ; "restore" from snapped state
 				return
 			}
 			; action: anything else
@@ -136,86 +143,94 @@ MoveWindow(horizontalDirection, horizontalSize)
 		}
 		
 		; action: all
-		windy.snap.left := windy.snap.left + horizontalDirection
-		windy.snap.left := windy.snap.left + (horizontalSize < 0 && windy.snap.left + windy.snap.width >= horizontalSections ? 1 : 0) ; keep right edge attached to monitor edge if shrinking
-		windy.snap.top := 0
-		windy.snap.width := windy.snap.width + horizontalSize
-		windy.snap.height := 1
+Debug("   action: " (horizontalDirection ? "move" : horizontalSize ? "resize" : "what?"))
+		window.grid.left := window.grid.left + horizontalDirection
+		window.grid.left := window.grid.left + (horizontalSize < 0 && window.grid.left + window.grid.width >= horizontalSections ? 1 : 0) ; keep right edge attached to monitor edge if shrinking
+		window.grid.top := 0
+		window.grid.width := window.grid.width + horizontalSize
+		window.grid.height := 1
 	}
 	
 	; state: restored
-	else if (windy.snap.snapped == 0)
+	else if (window.snapped == 0)
 	{
+Debug("state: restored")
 		; action: win+down
 		if (horizontalSize < 0)
 		{
+Debug("   action: minimize")
 			WinMinimize, A
 			return
 		}
 		
+		window.UpdatePosition()
+		
 		; action: anything else
-		windy.snap.snapped := 1
+Debug("   action: snap")
+		window.snapped := 1
 ; Snap based on left/right edges and left/right direction pushed
-		windy.snap.left := Floor(((horizontalDirection < 0 ? windy.posSize.xul : horizontalDirection > 0 ? windy.posSize.xlr : windy.centercoords.x) - mony.boundary.xul) / mony.workingArea.w * horizontalSections)
+		window.grid.left := Floor(((horizontalDirection < 0 ? window.position.x : horizontalDirection > 0 ? window.position.r : window.position.cx) - mon.area.x) / mon.workarea.w * horizontalSections)
 ; Original - Snap based on center coordinates
-;		windy.snap.left := Floor((windy.centercoords.x - mony.boundary.xul) / mony.workingArea.w * horizontalSections)
+;		window.grid.left := Floor((window.position.cx - mon.area.x) / mon.workarea.w * horizontalSections)
 ; Always snaps to current centercoords position, regardless of snap direction pushed
 ;		(do nothing more)
 ; Does not snap to current centercoords position - always left or right of current centercoords (unless against edge, of course)
-;		windy.snap.left := windy.snap.left + horizontalDirection
+;		window.grid.left := window.grid.left + horizontalDirection
 ; Shift one more snap direction if starting snap position is on opposite side of the screen from indicated direction
-;		windy.snap.left := windy.snap.left
-;									+ ((horizontalSections - 1) / 2 - windy.snap.left > 0 == horizontalDirection > 0 ; if snap position is on the opposite side of the screen as horizontal direction pushed (snap is 0 or 1 and win+right pushed; or snap is 2 or 3 and win+left pushed)
-;										|| (horizontalSections - 1) / 2 - windy.snap.left == 0 ; or if snap position is exact center (forward-compatibility for allowing horizontalSections == 3 (or any odd number))
+;		window.grid.left := window.grid.left
+;									+ ((horizontalSections - 1) / 2 - window.grid.left > 0 == horizontalDirection > 0 ; if snap position is on the opposite side of the screen as horizontal direction pushed (snap is 0 or 1 and win+right pushed; or snap is 2 or 3 and win+left pushed)
+;										|| (horizontalSections - 1) / 2 - window.grid.left == 0 ; or if snap position is exact center (forward-compatibility for allowing horizontalSections == 3 (or any odd number))
 ;										 ? horizontalDirection ; shift one more snap indicated direction
 ;										 : 0)
 ; Always snap against edge in direction pushed
-;		windy.snap.left := horizontalDirection < 0 ? 0 : horizontalDirection > 0 ? horizontalSections - 1 : windy.snap.left
+;		window.grid.left := horizontalDirection < 0 ? 0 : horizontalDirection > 0 ? horizontalSections - 1 : window.grid.left
 ; Always snap against center edge in direction pushed
-;		windy.snap.left := horizontalDirection < 0 ? horizontalSections // 2 - 1 : horizontalDirection > 0 ? (horizontalSections + 1) // 2 : windy.snap.left
-		windy.snap.top := 0
-		windy.snap.width := 1 + horizontalSize
-		windy.snap.height := 1
-		windy.snap.pre.left   := (windy.posSize.x - mony.boundary.xul) / mony.workingArea.w
-		windy.snap.pre.top    := (windy.posSize.y - mony.boundary.yul) / mony.workingArea.h
-		windy.snap.pre.width  :=  windy.posSize.w                      / mony.workingArea.w
-		windy.snap.pre.height :=  windy.posSize.h                      / mony.workingArea.h
+;		window.grid.left := horizontalDirection < 0 ? horizontalSections // 2 - 1 : horizontalDirection > 0 ? (horizontalSections + 1) // 2 : window.grid.left
+		window.grid.top := 0
+		window.grid.width := 1 + horizontalSize
+		window.grid.height := 1
+		window.restoredpos.left   := (window.position.x - mon.area.x) / mon.workarea.w
+		window.restoredpos.top    := (window.position.y - mon.area.y) / mon.workarea.h
+		window.restoredpos.width  :=  window.position.w               / mon.workarea.w
+		window.restoredpos.height :=  window.position.h               / mon.workarea.h
 	}
 	
 	; Enforce snap boundaries
 	
-	if windy.snap.left + windy.snap.width > horizontalSections
+	if window.grid.left + window.grid.width > horizontalSections
 	{
-		windy.snap.left := windy.snap.left - 1
+		window.grid.left := window.grid.left - 1
 	}
 	
-	if windy.snap.left < 0
+	if window.grid.left < 0
 	{
-		windy.snap.left := 0
+		window.grid.left := 0
 	}
 	
 	; Move/resize snap
-	WinMove, A, , windy.snap.left   * widthFactor  +    xOffset + mony.boundary.xul
-					, windy.snap.top    * heightFactor              + mony.boundary.yul
-					, windy.snap.width  * widthFactor  + -2*xOffset
-					, windy.snap.height * heightFactor + -1*xOffset ; + -2*yOffset + 1
+	WinMove, A, , window.grid.left   * widthFactor  +    window.position.xo + mon.area.x
+					, window.grid.top    * heightFactor                         + mon.area.y
+					, window.grid.width  * widthFactor  + -2*window.position.xo
+					, window.grid.height * heightFactor + -1*window.position.xo ; + -2*window.position.yo + 1
 }
 
 ExitFunc(exitReason, exitCode)
 {
-	local i
-	local windy
+	local i, window
+	local monitorId, mon
 	TrayTip, % ProgramTitle, Resetting snapped windows to their pre-snap size and position
-	for i, windy in TrackedWindows
+	for i, window in TrackedWindows
 	{
 		; state: snapped
-		if (windy.snap.snapped == 1)
+		if (window.snapped == 1)
 		{
-			mony := new Mony(windy.monitorID)
-			WinMove, % "ahk_id " windy.hwnd, , windy.snap.pre.left   * mony.workingArea.w + mony.boundary.xul
-														, windy.snap.pre.top    * mony.workingArea.h + mony.boundary.yul
-														, windy.snap.pre.width  * mony.workingArea.w
-														, windy.snap.pre.height * mony.workingArea.h ; "restore" from snapped state
+			monitorId := GetMonitorId(window.handle)
+			mon := new SnapMonitor(monitorId)
+			
+			WinMove, % "ahk_id " window.handle, , window.restoredpos.left   * mon.workarea.w + mon.area.x
+															, window.restoredpos.top    * mon.workarea.h + mon.area.y
+															, window.restoredpos.width  * mon.workarea.w
+															, window.restoredpos.height * mon.workarea.h ; "restore" from snapped state
 		}
 	}
 }
@@ -223,10 +238,35 @@ ExitFunc(exitReason, exitCode)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Helper Functions
 
+GetMonitorId(hwnd)
+{
+	local monArea, monAreaLeft, monAreaRight, monAreaTop, monAreaBottom
+	local winX, winY, winW, winH, winR, winB, winCenterX, winCenterY
+	
+	WinGetPos, winX, winY, winW, winH, % "ahk_id " hwnd
+	winR := winX + winW
+	winB := winY + winH
+	winCenterX := winX + winW / 2
+	winCenterY := winY + winH / 2
+	
+	SysGet, monitorCount, MonitorCount
+	
+	Loop, % monitorCount
+	{
+		SysGet, monArea, Monitor, % A_Index
+		
+		if (winCenterX >= monAreaLeft && winCenterX <= monAreaRight && winCenterY >= monAreaTop && winCenterY <= monAreaBottom)
+		{
+			return % A_Index
+		}
+	}
+	
+	return 1
+}
+
 IndexOf(array, value, itemProperty = "")
 {
-	local i
-	local item
+	local i, item
 	for i, item in array
 	{
 		if ((itemProperty <> null && item[itemProperty] = value) || item = value)
@@ -235,6 +275,66 @@ IndexOf(array, value, itemProperty = "")
 		}
 	}
 	return 0
+}
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Helper Classes
+
+class SizePosition
+{
+	__New(x, y, w=0, h=0, r=0, b=0, xo=0, yo=0)
+	{
+		this.x := x
+		this.l := x
+		this.y := y
+		this.t := y
+		this.w := w ? w : r ? r - x : 0
+		this.h := h ? h : b ? b - y : 0
+		this.r := r ? r : w ? x + w : 0
+		this.b := b ? b : h ? y + h : 0
+		this.cx := x && w ? x + w / 2 : 0
+		this.cy := y && h ? y + h / 2 : 0
+		this.xo := xo
+		this.yo := yo
+;Debug("x:" this.x " y:" this.y " w:" this.w " h:" h " r:" this.r " b:" this.b)
+	}
+}
+
+class SnapMonitor
+{
+	__New(monitorId)
+	{
+		this.id := monitorId
+		
+		SysGet, monArea, Monitor, % monitorId
+		this.area := new SizePosition(monAreaLeft, monAreaTop, , , monAreaRight, monAreaBottom)
+		
+		SysGet, monWorkArea, MonitorWorkArea, % monitorId
+		this.workarea := new SizePosition(monWorkAreaLeft, monWorkAreaTop, , , monWorkAreaRight, monWorkAreaBottom)
+
+;Debug("monitor:" this.id " a.x:" this.area.x " a.y:" this.area.y " a.w:" this.area.w " a.h:" this.area.h " a.r:" this.area.r " a.b:" this.area.b)
+;Debug("monitor:" this.id " wa.x:" this.workarea.x " wa.y:" this.workarea.y " wa.w:" this.workarea.w " wa.h:" this.workarea.h " wa.r:" this.workarea.r " wa.b:" this.workarea.b)
+	}
+}
+
+class SnapWindow
+{
+	__New(hwnd)
+	{
+		this.handle := hwnd
+		
+		this.position := new SizePosition(0, 0)
+		this.snapped := 0
+		this.grid := { left:0, top:0, width:0, height:0 }
+		this.restoredpos := { left:0.0, top:0.0, width:0.0, height:0.0 } ; in percentage of monitor
+	}
+	
+	UpdatePosition()
+	{
+		WinGetPos, winX, winY, winW, winH, % "ahk_id " this.handle
+		WinGetPosEx(this.handle, , , , , xOffset, yOffset)
+		this.position := new SizePosition(winX, winY, winW, winH, , , xOffset, yOffset)
+	}
 }
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
