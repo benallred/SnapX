@@ -218,7 +218,10 @@ ExitFunc(exitReason, exitCode)
 {
 	local i, window
 	local monitorId, mon
+	local minMaxState
+	
 	TrayTip, % ProgramTitle, Resetting snapped windows to their pre-snap size and position
+	
 	for i, window in TrackedWindows
 	{
 		; state: snapped
@@ -227,10 +230,19 @@ ExitFunc(exitReason, exitCode)
 			monitorId := GetMonitorId(window.handle)
 			mon := new SnapMonitor(monitorId)
 			
+			WinGet, minMaxState, MinMax, A
+			
+			WinRestore, % "ahk_id " window.handle
 			WinMove, % "ahk_id " window.handle, , window.restoredpos.left   * mon.workarea.w + mon.area.x
 															, window.restoredpos.top    * mon.workarea.h + mon.area.y
 															, window.restoredpos.width  * mon.workarea.w
 															, window.restoredpos.height * mon.workarea.h ; "restore" from snapped state
+			
+			; state: maximized
+			if (minMaxState > 0)
+			{
+				WinMaximize, % "ahk_id " window.handle
+			}
 		}
 	}
 }
