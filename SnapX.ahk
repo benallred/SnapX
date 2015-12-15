@@ -20,6 +20,9 @@ ProgramTitle := "SnapX"
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Script Startup
 
+Menu, Tray, Icon, shell32.dll, 160 ; other options: 16, 253, 255, 306
+Menu, Tray, NoStandard
+
 if not A_IsAdmin
 {
 	Run *RunAs "%A_ScriptFullPath%"
@@ -31,16 +34,17 @@ TrayTip, % ProgramTitle, Loaded, 1
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Read settings
+
 iniFile := ProgramTitle ".ini"
 
 IniRead, debug, %iniFile%, Settings, debug, 0
 
 IniRead, horizontalSections, %iniFile%, Settings, horizontalSections, 0
 
-if (!horizontalSections)
+if (!horizontalSections || horizontalSections < 2)
 {
 	SetTimer, ChangeButtonNames_HorizontalSections, 50
-	MsgBox, 4, %ProgramTitle% Settings, This is your first time running %ProgramTitle%, by Ben Allred.`n`nPlease select your desired horizontal grid size.`n`nThis setting can be changed via the %iniFile% file.
+	MsgBox, 4, %ProgramTitle% Settings, This is your first time running %ProgramTitle%, by Ben Allred.`n`nPlease select your desired horizontal grid size.`n`nThis setting can be changed via the %iniFile% file.`n(Access this by double-clicking the icon in the system tray.)
 	IfMsgBox, Yes
 		horizontalSections := 4
 	else ; No
@@ -51,10 +55,28 @@ if (!horizontalSections)
 
 IniRead, verticalSections, %iniFile%, Settings, verticalSections, 0
 
-if (!verticalSections)
+if (!verticalSections || verticalSections < 1)
 {
 	verticalSections := 1
 }
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Tray menu
+
+Menu, Tray, Add, % ProgramTitle, Tray_Settings
+Menu, Tray, Icon, % ProgramTitle, shell32.dll, 160
+;Menu, Tray, Disable, % ProgramTitle
+Menu, Tray, Add
+Menu, Tray, Add, &Settings, Tray_Settings
+Menu, Tray, Icon, &Settings, shell32.dll, 316
+Menu, Tray, Add, &Reload, Tray_Reload
+Menu, Tray, Icon, &Reload, shell32.dll, 239
+Menu, Tray, Add, S&uspend, Tray_Suspend
+Menu, Tray, Icon, S&uspend, shell32.dll, 145 ; other options: 238, 220
+Menu, Tray, Add, E&xit, Tray_Exit
+Menu, Tray, Icon, E&xit, shell32.dll, 132
+Menu, Tray, Default, &Settings
+Menu, Tray, Tip, % ProgramTitle
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -274,6 +296,46 @@ ExitFunc(exitReason, exitCode)
 			}
 		}
 	}
+}
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Settings and Tray
+
+Tray_Noop(itemName, itemPos, menuName)
+{
+	Menu, Tray, Show
+}
+
+Tray_Settings(itemName, itemPos, menuName)
+{
+	global iniFile
+	Run, notepad.exe %iniFile%
+}
+
+Tray_Reload(itemName, itemPos, menuName)
+{
+	Reload
+}
+
+Tray_Suspend(itemName, itemPos, menuName)
+{
+	if (A_IsSuspended)
+	{
+		Menu, Tray, Rename, Res&ume, S&uspend
+		Menu, Tray, Icon, S&uspend, shell32.dll, 145
+	}
+	else
+	{
+		Menu, Tray, Rename, S&uspend, Res&ume
+		Menu, Tray, Icon, Res&ume, shell32.dll, 302
+	}
+	
+	Suspend, Toggle
+}
+
+Tray_Exit(itemName, itemPos, menuName)
+{
+	ExitApp
 }
 
 ChangeButtonNames_HorizontalSections:
