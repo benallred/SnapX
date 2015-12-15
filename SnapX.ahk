@@ -30,9 +30,39 @@ SoundPlay *64
 TrayTip, % ProgramTitle, Loaded, 1
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Read settings
+iniFile := ProgramTitle ".ini"
 
-;global DebugInfo
-;CreateDebugWindow()
+IniRead, debug, %iniFile%, Settings, debug, 0
+
+IniRead, horizontalSections, %iniFile%, Settings, horizontalSections, 0
+
+if (!horizontalSections)
+{
+	SetTimer, ChangeButtonNames_HorizontalSections, 50
+	MsgBox, 4, %ProgramTitle% Settings, This is your first time running %ProgramTitle%, by Ben Allred.`n`nPlease select your desired horizontal grid size.`n`nThis setting can be changed via the %iniFile% file.
+	IfMsgBox, Yes
+		horizontalSections := 4
+	else ; No
+		horizontalSections := 3
+
+	IniWrite, %horizontalSections%, %iniFile%, Settings, horizontalSections
+}
+
+IniRead, verticalSections, %iniFile%, Settings, verticalSections, 0
+
+if (!verticalSections)
+{
+	verticalSections := 1
+}
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+if (debug)
+{
+	global DebugInfo
+	CreateDebugWindow()
+}
 
 TrackedWindows := []
 
@@ -50,7 +80,7 @@ OnExit("ExitFunc")
 
 MoveWindow(horizontalDirection, horizontalSize)
 {
-	global TrackedWindows
+	global TrackedWindows, horizontalSections, verticalSections
 	
 	WinGet, activeWindowHandle, ID, A
 	
@@ -74,9 +104,8 @@ MoveWindow(horizontalDirection, horizontalSize)
 	mon := new SnapMonitor(monitorId)
 	
 	WinGet, minMaxState, MinMax, A
-	horizontalSections := 4
-	widthFactor := mon.workarea.w / horizontalSections
-	heightFactor := mon.workarea.h / 1
+	widthFactor  := mon.workarea.w / horizontalSections
+	heightFactor := mon.workarea.h / verticalSections
 	
 	; state: minimized
 	if (minMaxState < 0)
@@ -246,6 +275,15 @@ ExitFunc(exitReason, exitCode)
 		}
 	}
 }
+
+ChangeButtonNames_HorizontalSections:
+	IfWinNotExist, %ProgramTitle% Settings
+		return
+	SetTimer, ChangeButtonNames_HorizontalSections, Off
+	WinActivate
+	ControlSetText, Button1, 4
+	ControlSetText, Button2, 3
+return
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Helper Functions
