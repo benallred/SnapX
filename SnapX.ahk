@@ -37,6 +37,13 @@ TrayTip, % ProgramTitle, Loaded, 1
 
 iniFile := ProgramTitle ".ini"
 
+IfNotExist %iniFile%
+{
+	FileAppend, % ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;`n", % iniFile
+	FileAppend, % ";; Make sure to reload " ProgramTitle " after making changes (right-click tray menu > Reload).`n", % iniFile
+	FileAppend, % ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;`n", % iniFile
+}
+
 IniRead, debug, %iniFile%, Settings, debug, 0
 
 IniRead, horizontalSections, %iniFile%, Settings, horizontalSections, 0
