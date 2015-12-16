@@ -33,7 +33,7 @@ SoundPlay *64
 TrayTip, % ProgramTitle, Loaded, 1
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Read settings
+;; Read Settings
 
 iniFile := ProgramTitle ".ini"
 
@@ -61,7 +61,7 @@ if (!verticalSections || verticalSections < 1)
 }
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Tray menu
+;; Tray Menu
 
 Menu, Tray, Add, % ProgramTitle, Tray_Settings
 Menu, Tray, Icon, % ProgramTitle, shell32.dll, 160
@@ -79,6 +79,7 @@ Menu, Tray, Default, &Settings
 Menu, Tray, Tip, % ProgramTitle
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Setup
 
 if (debug)
 {
@@ -87,10 +88,18 @@ if (debug)
 }
 
 TrackedWindows := []
+LastOperation := Operation.None
+LastWindowHandle := -1
+StillHoldingWinKey := 0
 
 OnExit("ExitFunc")
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Hotkeys
+
+#If debug
 #`::Reload ; for ease of testing during development
+#If
 
 #Left::MoveWindow(-1, 0)
 
@@ -100,9 +109,27 @@ OnExit("ExitFunc")
 
 #Down::MoveWindow(0, -1)
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Main Functionality
+
 MoveWindow(horizontalDirection, horizontalSize)
 {
-	global TrackedWindows, horizontalSections, verticalSections
+	global TrackedWindows, LastOperation, LastWindowHandle, StillHoldingWinKey, horizontalSections, verticalSections
+	
+	; state: minimized and LWin not released yet
+	if (LastOperation == Operation.Minimized && StillHoldingWinKey)
+	{
+Debug("state: minimized")
+		if (horizontalSize > 0)
+		{
+Debug("   action: restore")
+			StillHoldingWinKey := 0
+			LastOperation := Operation.Restored
+			WinRestore, % "ahk_id " LastWindowHandle
+		}
+		; action: anything else
+		return
+	}
 	
 	WinGet, activeWindowHandle, ID, A
 	
@@ -121,6 +148,7 @@ MoveWindow(horizontalDirection, horizontalSize)
 	}
 	
 	window := TrackedWindows[index]
+	LastWindowHandle := window.handle
 	
 	monitorId := GetMonitorId(window.handle)
 	mon := new SnapMonitor(monitorId)
@@ -137,6 +165,7 @@ Debug("state: minimized")
 		if (horizontalSize > 0)
 		{
 Debug("   action: restore")
+			LastOperation := Operation.Restored
 			WinRestore, A
 		}
 		; action: anything else
@@ -151,6 +180,7 @@ Debug("state: maximized")
 		if (horizontalSize < 0)
 		{
 Debug("   action: restore snapped")
+			LastOperation := Operation.RestoredSnapped
 			WinRestore, A
 		}
 		; action: anything else
@@ -168,6 +198,7 @@ Debug("state: snapped")
 			if (horizontalSize > 0)
 			{
 Debug("   action: maximize")
+				LastOperation := Operation.Maximized
 				WinMaximize, A
 				return
 			}
@@ -195,6 +226,7 @@ Debug("   action: restore unsnapped")
 		
 		; action: all
 Debug("   action: " (horizontalDirection ? "move" : horizontalSize ? "resize" : "what?"))
+		LastOperation := Operation.Moved
 		window.grid.left := window.grid.left + horizontalDirection
 		window.grid.left := window.grid.left + (horizontalSize < 0 && window.grid.left + window.grid.width >= horizontalSections ? 1 : 0) ; keep right edge attached to monitor edge if shrinking
 		window.grid.top := 0
@@ -210,7 +242,17 @@ Debug("state: restored")
 		if (horizontalSize < 0)
 		{
 Debug("   action: minimize")
+			StillHoldingWinKey := 1
+			LastOperation := Operation.Minimized
 			WinMinimize, A
+			While StillHoldingWinKey
+			{
+				KeyWait, LWin, T0.25
+				if (!ErrorLevel)
+				{
+					StillHoldingWinKey := 0
+				}
+			}
 			return
 		}
 		
@@ -218,6 +260,7 @@ Debug("   action: minimize")
 		
 		; action: anything else
 Debug("   action: snap")
+		LastOperation := Operation.Snapped
 		window.snapped := 1
 ; Snap based on left/right edges and left/right direction pushed
 		window.grid.left := Floor(((horizontalDirection < 0 ? window.position.x : horizontalDirection > 0 ? window.position.r : window.position.cx) - mon.area.x) / mon.workarea.w * horizontalSections)
@@ -303,7 +346,6 @@ ExitFunc(exitReason, exitCode)
 
 Tray_Noop(itemName, itemPos, menuName)
 {
-	Menu, Tray, Show
 }
 
 Tray_Settings(itemName, itemPos, menuName)
@@ -391,6 +433,17 @@ IndexOf(array, value, itemProperty = "")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Helper Classes
+
+class Operation
+{
+	static None            := 0
+	static Minimized       := 1
+	static Restored        := 2
+	static Snapped         := 3
+	static Moved           := 4
+	static RestoredSnapped := 5
+	static Maximized       := 6
+}
 
 class SizePosition
 {
