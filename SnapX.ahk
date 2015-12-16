@@ -120,6 +120,7 @@ MoveWindow(horizontalDirection, horizontalSize)
 	if (LastOperation == Operation.Minimized && StillHoldingWinKey)
 	{
 Debug("state: minimized")
+		; action: win+up
 		if (horizontalSize > 0)
 		{
 Debug("   action: restore")
@@ -507,14 +508,17 @@ class SnapWindow
 
 CreateDebugWindow()
 {
+	global ProgramTitle
 	Gui, +AlwaysOnTop
-	Gui, Add, ListBox, vDebugInfo w300 h1100
-	Gui, Show, x10 y10
+	Gui, Add, ListView, vDebugInfo r20 w300 -Hdr, DebugId|Debug Info
+	Gui, Show, x10 y10, %ProgramTitle% Debug Info
 }
 
 Debug(text)
 {
-	GuiControl, , DebugInfo, % text
+	lastRow := LV_Add("", , text)
+	LV_Modify(lastRow, "Vis", lastRow)
+	LV_ModifyCol(1, "Auto")
 }
 
 DebugArray(array, itemProperty)
