@@ -16,6 +16,8 @@ SetWorkingDir %A_ScriptDir%  ; Ensures a consistent starting directory.
 
 null =
 ProgramTitle := "SnapX"
+Build := { version: "" }
+#Include *i Build.ahk
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Script Startup
@@ -51,7 +53,7 @@ IniRead, horizontalSections, %iniFile%, Settings, horizontalSections, 0
 if (!horizontalSections || horizontalSections < 2)
 {
 	SetTimer, ChangeButtonNames_HorizontalSections, 50
-	MsgBox, 4, %ProgramTitle% Settings, This is your first time running %ProgramTitle%, by Ben Allred.`n`nPlease select your desired horizontal grid size.`n`nThis setting can be changed via the %iniFile% file.`n(Access this by double-clicking the icon in the system tray.)
+	MsgBox, 4, %ProgramTitle% Settings, This is your first time running %ProgramTitle%, by Ben Allred.`n`nPlease select your desired horizontal grid size.`n`nThis setting can be changed via the %iniFile% file.`n(Access this via the icon in the system tray.)
 	IfMsgBox, Yes
 		horizontalSections := 4
 	else ; No
@@ -70,9 +72,11 @@ if (!verticalSections || verticalSections < 1)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Tray Menu
 
-Menu, Tray, Add, % ProgramTitle, Tray_Settings
+Menu, Tray, Add, % ProgramTitle, Tray_About
 Menu, Tray, Icon, % ProgramTitle, shell32.dll, 160
 ;Menu, Tray, Disable, % ProgramTitle
+Menu, Tray, Add, &About, Tray_About
+Menu, Tray, Icon, &About, shell32.dll, 222 ; other options: 155, 176, 211, 222, 225, 278
 Menu, Tray, Add
 Menu, Tray, Add, &Settings, Tray_Settings
 Menu, Tray, Icon, &Settings, shell32.dll, 316
@@ -82,7 +86,7 @@ Menu, Tray, Add, S&uspend, Tray_Suspend
 Menu, Tray, Icon, S&uspend, shell32.dll, 145 ; other options: 238, 220
 Menu, Tray, Add, E&xit, Tray_Exit
 Menu, Tray, Icon, E&xit, shell32.dll, 132
-Menu, Tray, Default, &Settings
+Menu, Tray, Default, % ProgramTitle
 Menu, Tray, Tip, % ProgramTitle
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -354,6 +358,35 @@ ExitFunc(exitReason, exitCode)
 
 Tray_Noop(itemName, itemPos, menuName)
 {
+}
+
+Tray_About(itemName, itemPos, menuName)
+{
+	Global ProgramTitle, Build, debug
+	
+	Gui, About:New, -MaximizeBox
+	
+	Gui, About:Font, s24 bold
+	Gui, About:Add, Text, , % ProgramTitle
+	
+	Gui, About:Margin, , 0
+	Gui, About:Font
+	Gui, About:Add, Text, , % (Build.version ? "v" Build.version : "AutoHotkey script") ", " (A_PtrSize * 8) "-bit" (debug ? ", Debug enabled" : "") (A_IsCompiled ? "" : ", not compiled")
+	
+	Gui, About:Add, Text, , Copyright (c) Ben Allred
+	
+	Gui, About:Margin, , 10
+	Gui, About:Font, s12
+	Gui, About:Add, Text, , Replacement for Windows/Aero Snap.
+	Gui, About:Add, Link, , Website: <a href="https://github.com/benallred/SnapX">https://github.com/benallred/SnapX</a>
+	
+	Gui, About:Margin, , 18
+	Gui, About:Show, , % ProgramTitle
+}
+
+AboutGuiEscape(hwnd)
+{
+	Gui, About:Destroy
 }
 
 Tray_Settings(itemName, itemPos, menuName)

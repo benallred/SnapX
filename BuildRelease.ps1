@@ -29,6 +29,15 @@ function BuildRelease([string]$releaseVersion, [int]$architecture)
 Write-Host "Specify release version"
 $releaseVersion = Read-Host
 
+$buildInfoFilePath = "Build.ahk"
+
+if (Test-Path $buildInfoFilePath)
+{
+    Remove-Item -Path $buildInfoFilePath
+}
+
+Add-Content -Path $buildInfoFilePath -Value "Build := { version: `"$releaseVersion`" }"
+
 BuildRelease $releaseVersion 64
 BuildRelease $releaseVersion 32
 
