@@ -137,7 +137,8 @@ Debug("state: minimized")
 Debug("   action: restore")
 			StillHoldingWinKey := 0
 			LastOperation := Operation.Restored
-			WinRestore, % "ahk_id " LastWindowHandle
+			WinRestore, % "ahk_id " LastWindowHandle  ; WinRestore followed by WinActivate, with ahk_id specified explicitely on each, was the only way I could get
+			WinActivate, % "ahk_id " LastWindowHandle ; Win+Down, Win+Up (particularly when done in quick succession) to restore and set focus again reliably.
 		}
 		; action: anything else
 		return
