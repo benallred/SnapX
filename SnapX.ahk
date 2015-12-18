@@ -371,7 +371,11 @@ Tray_About(itemName, itemPos, menuName)
 	
 	Gui, About:Margin, , 0
 	Gui, About:Font
-	Gui, About:Add, Text, , % (Build.version ? "v" Build.version : "AutoHotkey script") ", " (A_PtrSize * 8) "-bit" (debug ? ", Debug enabled" : "") (A_IsCompiled ? "" : ", not compiled")
+	Gui, About:Add, Text, , % (Build.version ? "v" Build.version : "AutoHotkey script")
+									. ", " (A_PtrSize * 8) "-bit"
+									. (debug ? ", Debug enabled" : "")
+									. (A_IsCompiled ? "" : ", not compiled")
+									. (A_IsAdmin ? "" : ", not running as administrator") ; shouldn't ever display
 	
 	Gui, About:Add, Text, , Copyright (c) Ben Allred
 	
