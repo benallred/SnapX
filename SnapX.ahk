@@ -148,8 +148,23 @@ Debug("   action: restore")
 	
 	WinGet, activeWindowStyle, Style, A
 	
+	; state: not resizable
 	if (!(activeWindowStyle & WS.SIZEBOX)) ; if window is not resizable
 	{
+		; state: minimizable
+		if (activeWindowStyle & WS.MINIMIZEBOX) ; if window is minimizable
+		{
+			; action: win+down
+			if (horizontalSize < 0)
+			{
+Debug("state: restored")
+Debug("   action: minimize")
+				LastWindowHandle := activeWindowHandle
+				MinimizeAndKeyWaitLWin()
+			}
+			; action: anything else
+			; (continue)
+		}
 		return
 	}
 
@@ -254,17 +269,11 @@ Debug("state: restored")
 		; action: win+down
 		if (horizontalSize < 0)
 		{
-Debug("   action: minimize")
-			StillHoldingWinKey := 1
-			LastOperation := Operation.Minimized
-			WinMinimize, A
-			While StillHoldingWinKey
+			; state: minimizable
+			if (activeWindowStyle & WS.MINIMIZEBOX) ; if window is minimizable
 			{
-				KeyWait, LWin, T0.25
-				if (!ErrorLevel)
-				{
-					StillHoldingWinKey := 0
-				}
+Debug("   action: minimize")
+				MinimizeAndKeyWaitLWin()
 			}
 			return
 		}
@@ -319,6 +328,22 @@ Debug("   action: snap")
 					, window.grid.top    * heightFactor                         + mon.workarea.y
 					, window.grid.width  * widthFactor  + -2*window.position.xo
 					, window.grid.height * heightFactor + -1*window.position.xo ; + -2*window.position.yo + 1
+}
+
+MinimizeAndKeyWaitLWin()
+{
+	global LastOperation, StillHoldingWinKey
+	StillHoldingWinKey := 1
+	LastOperation := Operation.Minimized
+	WinMinimize, A
+	While StillHoldingWinKey
+	{
+		KeyWait, LWin, T0.25
+		if (!ErrorLevel)
+		{
+			StillHoldingWinKey := 0
+		}
+	}
 }
 
 ExitFunc(exitReason, exitCode)
