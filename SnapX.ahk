@@ -337,7 +337,7 @@ ExitFunc(exitReason, exitCode)
 			monitorId := GetMonitorId(window.handle)
 			mon := new SnapMonitor(monitorId)
 			
-			WinGet, minMaxState, MinMax, A
+			WinGet, minMaxState, MinMax, % "ahk_id " window.handle
 			
 			WinRestore, % "ahk_id " window.handle
 			WinMove, % "ahk_id " window.handle, , window.restoredpos.left   * mon.workarea.w + mon.area.x
