@@ -446,20 +446,19 @@ return
 
 GetMonitorId(hwnd)
 {
-	local monArea, monAreaLeft, monAreaRight, monAreaTop, monAreaBottom
-	local winCenterX, winCenterY
+	local mon, winCenterX, winCenterY
 	
-	GetWindowPlacement(hwnd, wp)
-	winCenterX := (wp.rcNormalPosition.left + wp.rcNormalPosition.right ) / 2
-	winCenterY := (wp.rcNormalPosition.top  + wp.rcNormalPosition.bottom) / 2
+	GetWindowPlacement(hwnd, wp) ; GetWindowPlacement returns restored position of window (need this in case hwnd is minimized)
 	
 	SysGet, monitorCount, MonitorCount
 	
 	Loop, % monitorCount
 	{
-		SysGet, monArea, Monitor, % A_Index
+		mon := new SnapMonitor(A_Index)
 		
-		if (winCenterX >= monAreaLeft && winCenterX <= monAreaRight && winCenterY >= monAreaTop && winCenterY <= monAreaBottom)
+		winCenterX := (wp.rcNormalPosition.left + mon.workarea.xo + wp.rcNormalPosition.right + mon.workarea.xo) / 2 ; wp coordinates are in workspace coordinates
+		winCenterY := (wp.rcNormalPosition.top + mon.workarea.yo + wp.rcNormalPosition.bottom + mon.workarea.yo) / 2 ; wp coordinates are in workspace coordinates
+		if (winCenterX >= mon.area.x && winCenterX <= mon.area.r && winCenterY >= mon.area.y && winCenterY <= mon.area.b)
 		{
 			return % A_Index
 		}
@@ -622,7 +621,7 @@ class SnapMonitor
 		this.area := new SizePosition(monAreaLeft, monAreaTop, , , monAreaRight, monAreaBottom)
 		
 		SysGet, monWorkArea, MonitorWorkArea, % monitorId
-		this.workarea := new SizePosition(monWorkAreaLeft, monWorkAreaTop, , , monWorkAreaRight, monWorkAreaBottom)
+		this.workarea := new SizePosition(monWorkAreaLeft, monWorkAreaTop, , , monWorkAreaRight, monWorkAreaBottom, monWorkAreaLeft - monAreaLeft, monWorkAreaTop - monAreaTop)
 
 ;Debug("a.x:" this.area.x " a.y:" this.area.y " a.w:" this.area.w " a.h:" this.area.h " a.r:" this.area.r " a.b:" this.area.b)
 ;Debug("a.x:" this.workarea.x " a.y:" this.workarea.y " a.w:" this.workarea.w " a.h:" this.workarea.h " a.r:" this.workarea.r " a.b:" this.workarea.b)
