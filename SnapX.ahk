@@ -227,8 +227,8 @@ Debug("   action: maximize")
 			{
 Debug("   action: restore unsnapped")
 				window.snapped := 0
-				WinMove, A, , window.restoredpos.left   * mon.workarea.w + mon.area.x
-								, window.restoredpos.top    * mon.workarea.h + mon.area.y
+				WinMove, A, , window.restoredpos.left   * mon.workarea.w + mon.workarea.x
+								, window.restoredpos.top    * mon.workarea.h + mon.workarea.y
 								, window.restoredpos.width  * mon.workarea.w
 								, window.restoredpos.height * mon.workarea.h ; "restore" from snapped state
 				return
@@ -276,9 +276,9 @@ Debug("   action: snap")
 		LastOperation := Operation.Snapped
 		window.snapped := 1
 ; Snap based on left/right edges and left/right direction pushed
-		window.grid.left := Floor(((horizontalDirection < 0 ? window.position.x : horizontalDirection > 0 ? window.position.r : window.position.cx) - mon.area.x) / mon.workarea.w * horizontalSections)
+		window.grid.left := Floor(((horizontalDirection < 0 ? window.position.x : horizontalDirection > 0 ? window.position.r : window.position.cx) - mon.workarea.x) / mon.workarea.w * horizontalSections)
 ; Original - Snap based on center coordinates
-;		window.grid.left := Floor((window.position.cx - mon.area.x) / mon.workarea.w * horizontalSections)
+;		window.grid.left := Floor((window.position.cx - mon.workarea.x) / mon.workarea.w * horizontalSections)
 ; Always snaps to current centercoords position, regardless of snap direction pushed
 ;		(do nothing more)
 ; Does not snap to current centercoords position - always left or right of current centercoords (unless against edge, of course)
@@ -296,10 +296,10 @@ Debug("   action: snap")
 		window.grid.top := 0
 		window.grid.width := 1 + horizontalSize
 		window.grid.height := 1
-		window.restoredpos.left   := (window.position.x - mon.area.x) / mon.workarea.w
-		window.restoredpos.top    := (window.position.y - mon.area.y) / mon.workarea.h
-		window.restoredpos.width  :=  window.position.w               / mon.workarea.w
-		window.restoredpos.height :=  window.position.h               / mon.workarea.h
+		window.restoredpos.left   := (window.position.x - mon.workarea.x) / mon.workarea.w
+		window.restoredpos.top    := (window.position.y - mon.workarea.y) / mon.workarea.h
+		window.restoredpos.width  :=  window.position.w                   / mon.workarea.w
+		window.restoredpos.height :=  window.position.h                   / mon.workarea.h
 	}
 	
 	; Enforce snap boundaries
@@ -315,8 +315,8 @@ Debug("   action: snap")
 	}
 	
 	; Move/resize snap
-	WinMove, A, , window.grid.left   * widthFactor  +    window.position.xo + mon.area.x
-					, window.grid.top    * heightFactor                         + mon.area.y
+	WinMove, A, , window.grid.left   * widthFactor  +    window.position.xo + mon.workarea.x
+					, window.grid.top    * heightFactor                         + mon.workarea.y
 					, window.grid.width  * widthFactor  + -2*window.position.xo
 					, window.grid.height * heightFactor + -1*window.position.xo ; + -2*window.position.yo + 1
 }
@@ -340,8 +340,8 @@ ExitFunc(exitReason, exitCode)
 			WinGet, minMaxState, MinMax, % "ahk_id " window.handle
 			
 			WinRestore, % "ahk_id " window.handle
-			WinMove, % "ahk_id " window.handle, , window.restoredpos.left   * mon.workarea.w + mon.area.x
-															, window.restoredpos.top    * mon.workarea.h + mon.area.y
+			WinMove, % "ahk_id " window.handle, , window.restoredpos.left   * mon.workarea.w + mon.workarea.x
+															, window.restoredpos.top    * mon.workarea.h + mon.workarea.y
 															, window.restoredpos.width  * mon.workarea.w
 															, window.restoredpos.height * mon.workarea.h ; "restore" from snapped state
 			
@@ -523,8 +523,8 @@ class SnapMonitor
 		SysGet, monWorkArea, MonitorWorkArea, % monitorId
 		this.workarea := new SizePosition(monWorkAreaLeft, monWorkAreaTop, , , monWorkAreaRight, monWorkAreaBottom)
 
-;Debug("monitor:" this.id " a.x:" this.area.x " a.y:" this.area.y " a.w:" this.area.w " a.h:" this.area.h " a.r:" this.area.r " a.b:" this.area.b)
-;Debug("monitor:" this.id " wa.x:" this.workarea.x " wa.y:" this.workarea.y " wa.w:" this.workarea.w " wa.h:" this.workarea.h " wa.r:" this.workarea.r " wa.b:" this.workarea.b)
+;Debug("a.x:" this.area.x " a.y:" this.area.y " a.w:" this.area.w " a.h:" this.area.h " a.r:" this.area.r " a.b:" this.area.b)
+;Debug("a.x:" this.workarea.x " a.y:" this.workarea.y " a.w:" this.workarea.w " a.h:" this.workarea.h " a.r:" this.workarea.r " a.b:" this.workarea.b)
 	}
 }
 
