@@ -14,7 +14,6 @@ SetWorkingDir %A_ScriptDir%  ; Ensures a consistent starting directory.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Constants
 
-null =
 ProgramTitle := "SnapX"
 Build := { version: "" }
 #Include *i Build.ahk
@@ -32,7 +31,7 @@ if not A_IsAdmin
 }
 
 SoundPlay *64
-TrayTip, % ProgramTitle, Loaded, 1
+TrayTip, % ProgramTitle, Loaded
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Read Settings
@@ -585,7 +584,7 @@ IndexOf(array, value, itemProperty = "")
 	local i, item
 	for i, item in array
 	{
-		if ((itemProperty <> null && item[itemProperty] = value) || item = value)
+		if ((itemProperty <> "" && item[itemProperty] = value) || item = value)
 		{
 			return i
 		}
