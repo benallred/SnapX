@@ -339,16 +339,22 @@ ExitFunc(exitReason, exitCode)
 			
 			WinGet, minMaxState, MinMax, % "ahk_id " window.handle
 			
-			WinRestore, % "ahk_id " window.handle
-			WinMove, % "ahk_id " window.handle, , window.restoredpos.left   * mon.workarea.w + mon.workarea.x
-															, window.restoredpos.top    * mon.workarea.h + mon.workarea.y
-															, window.restoredpos.width  * mon.workarea.w
-															, window.restoredpos.height * mon.workarea.h ; "restore" from snapped state
-			
-			; state: maximized
-			if (minMaxState > 0)
+			; state: minimized or maximized
+			if (minMaxState != 0)
 			{
-				WinMaximize, % "ahk_id " window.handle
+				GetWindowPlacement(window.handle, wp)
+				wp.rcNormalPosition.left   :=                            window.restoredpos.left   * mon.workarea.w + mon.area.x
+				wp.rcNormalPosition.top    :=                            window.restoredpos.top    * mon.workarea.h + mon.area.y
+				wp.rcNormalPosition.right  := wp.rcNormalPosition.left + window.restoredpos.width  * mon.workarea.w
+				wp.rcNormalPosition.bottom := wp.rcNormalPosition.top  + window.restoredpos.height * mon.workarea.h
+				SetWindowPlacement(window.handle, wp) ; set restored position to pre-snap state (maintains current minimized or maximized status)
+			}
+			else
+			{
+				WinMove, % "ahk_id " window.handle, , window.restoredpos.left   * mon.workarea.w + mon.workarea.x
+																, window.restoredpos.top    * mon.workarea.h + mon.workarea.y
+																, window.restoredpos.width  * mon.workarea.w
+																, window.restoredpos.height * mon.workarea.h ; "restore" from snapped state
 			}
 		}
 	}
@@ -441,13 +447,11 @@ return
 GetMonitorId(hwnd)
 {
 	local monArea, monAreaLeft, monAreaRight, monAreaTop, monAreaBottom
-	local winX, winY, winW, winH, winR, winB, winCenterX, winCenterY
+	local winCenterX, winCenterY
 	
-	WinGetPos, winX, winY, winW, winH, % "ahk_id " hwnd
-	winR := winX + winW
-	winB := winY + winH
-	winCenterX := winX + winW / 2
-	winCenterY := winY + winH / 2
+	GetWindowPlacement(hwnd, wp)
+	winCenterX := (wp.rcNormalPosition.left + wp.rcNormalPosition.right ) / 2
+	winCenterY := (wp.rcNormalPosition.top  + wp.rcNormalPosition.bottom) / 2
 	
 	SysGet, monitorCount, MonitorCount
 	
@@ -462,6 +466,94 @@ GetMonitorId(hwnd)
 	}
 	
 	return 1
+}
+
+NumGetInc(ByRef VarOrAddress, ByRef Offset, Type)
+{
+	value := NumGet(VarOrAddress, Offset, Type)
+	Offset := Offset + SizeOf[Type]
+	return value
+}
+
+NumPutInc(Number, ByRef VarOrAddress, ByRef Offset, Type)
+{
+	NumPut(Number, VarOrAddress, Offset, Type)
+	Offset := Offset + SizeOf[Type]
+}
+
+GetWindowPlacement(hwnd, ByRef lpwndpl)
+{
+	VarSetCapacity(_lpwndpl, 44)
+	NumPut(44, _lpwndpl)
+	result := DllCall("GetWindowPlacement", Ptr, hwnd, Ptr, &_lpwndpl)
+	runningOffset := 0
+	lpwndpl := new WINDOWPLACEMENT(NumGetInc(_lpwndpl, runningOffset, "UInt")
+											, NumGetInc(_lpwndpl, runningOffset, "UInt")
+											, NumGetInc(_lpwndpl, runningOffset, "UInt")
+											, new tagPOINT(NumGetInc(_lpwndpl, runningOffset, "Int")
+															, NumGetInc(_lpwndpl, runningOffset, "Int"))
+											, new tagPOINT(NumGetInc(_lpwndpl, runningOffset, "Int")
+															, NumGetInc(_lpwndpl, runningOffset, "Int"))
+											, new _RECT(NumGetInc(_lpwndpl, runningOffset, "Int")
+															, NumGetInc(_lpwndpl, runningOffset, "Int")
+															, NumGetInc(_lpwndpl, runningOffset, "Int")
+															, NumGetInc(_lpwndpl, runningOffset, "Int")))
+	return result
+}
+
+SetWindowPlacement(hwnd, ByRef lpwndpl)
+{
+	VarSetCapacity(_lpwndpl, 44)
+	runningOffset := 0
+	NumPutInc(lpwndpl.length , _lpwndpl, runningOffset, "UInt")
+	NumPutInc(lpwndpl.flags  , _lpwndpl, runningOffset, "UInt")
+	NumPutInc(lpwndpl.showCmd, _lpwndpl, runningOffset, "UInt")
+	NumPutInc(lpwndpl.ptMinPosition.x, _lpwndpl, runningOffset, "Int")
+	NumPutInc(lpwndpl.ptMinPosition.y, _lpwndpl, runningOffset, "Int")
+	NumPutInc(lpwndpl.ptMaxPosition.x, _lpwndpl, runningOffset, "Int")
+	NumPutInc(lpwndpl.ptMaxPosition.y, _lpwndpl, runningOffset, "Int")
+	NumPutInc(lpwndpl.rcNormalPosition.left  , _lpwndpl, runningOffset, "Int")
+	NumPutInc(lpwndpl.rcNormalPosition.top   , _lpwndpl, runningOffset, "Int")
+	NumPutInc(lpwndpl.rcNormalPosition.right , _lpwndpl, runningOffset, "Int")
+	NumPutInc(lpwndpl.rcNormalPosition.bottom, _lpwndpl, runningOffset, "Int")
+	result := DllCall("SetWindowPlacement", Ptr, hwnd, Ptr, &_lpwndpl)
+	return result
+}
+
+class WINDOWPLACEMENT
+{
+	; UINT, UINT, UINT, POINT, POINT, RECT
+	__New(length, flags, showCmd, ptMinPosition, ptMaxPosition, rcNormalPosition)
+	{
+		this.length := length
+		this.flags := flags
+		this.showCmd := showCmd
+		this.ptMinPosition := ptMinPosition
+		this.ptMaxPosition := ptMaxPosition
+		this.rcNormalPosition := rcNormalPosition
+	}
+}
+
+class tagPOINT
+{
+	; LONG, LONG
+	__New(x, y)
+	{
+		this.x := x
+		this.y := y
+	}
+}
+
+class _RECT
+{
+	; LONG, LONG, LONG, LONG
+	__New(left, top, right, bottom)
+	{
+		this.left := left
+		this.top := top
+		this.right := right
+		this.bottom := bottom
+	}
 }
 
 IndexOf(array, value, itemProperty = "")
@@ -479,6 +571,15 @@ IndexOf(array, value, itemProperty = "")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Helper Classes
+
+class SizeOf
+{
+	static UInt := 32 // 8
+	static Int := 32 // 8
+	static Long := SizeOf.Int
+	static Point := SizeOf.Long * 2
+	static Rect := SizeOf.Long * 4
+}
 
 class Operation
 {
