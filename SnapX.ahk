@@ -76,6 +76,8 @@ Menu, Tray, Icon, % ProgramTitle, shell32.dll, 160
 ;Menu, Tray, Disable, % ProgramTitle
 Menu, Tray, Add, &About, Tray_About
 Menu, Tray, Icon, &About, shell32.dll, 222 ; other options: 155, 176, 211, 222, 225, 278
+Menu, Tray, Add, Chec&k for update, Tray_Update
+Menu, Tray, Icon, Chec&k for update, shell32.dll, 47 ; other options: 47, 123
 Menu, Tray, Add
 Menu, Tray, Add, &Settings, Tray_Settings
 Menu, Tray, Icon, &Settings, shell32.dll, 316
@@ -422,6 +424,20 @@ Tray_About(itemName, itemPos, menuName)
 AboutGuiEscape(hwnd)
 {
 	Gui, About:Destroy
+}
+
+Tray_Update(itemName, itemPos, menuName)
+{
+	global ProgramTitle, Build
+	Run, https://github.com/benallred/SnapX/releases/latest
+	if (A_IsCompiled)
+	{
+		MsgBox, 0x40040, % ProgramTitle, % "You are running version " Build.version ; 0x40 = Info, 0x40000 = always on top
+	}
+	else
+	{
+		MsgBox, 0x40030, % ProgramTitle, % "You are not running a compiled version" ; 0x30 = Exclamation, 0x40000 = always on top
+	}
 }
 
 Tray_Settings(itemName, itemPos, menuName)
