@@ -46,9 +46,13 @@ IfNotExist %iniFile%
 }
 
 IniRead, debug, %iniFile%, Settings, debug, 0
+if (debug)
+{
+	global DebugInfo
+	CreateDebugWindow()
+}
 
 IniRead, horizontalSections, %iniFile%, Settings, horizontalSections, 0
-
 if (!horizontalSections || horizontalSections < 2)
 {
 	SetTimer, ChangeButtonNames_HorizontalSections, 50
@@ -62,10 +66,40 @@ if (!horizontalSections || horizontalSections < 2)
 }
 
 IniRead, verticalSections, %iniFile%, Settings, verticalSections, 0
-
 if (!verticalSections || verticalSections < 1)
 {
 	verticalSections := 1
+}
+
+IniRead, checkForUpdates, %iniFile%, Updates, checkForUpdates, -1
+if (checkForUpdates < 0)
+{
+	checkForUpdates := 1
+	IniWrite, %checkForUpdates%, %iniFile%, Updates, checkForUpdates
+}
+
+IniRead, checkForUpdates_IntervalDays, %iniFile%, Updates, checkForUpdates_IntervalDays, -1
+if (checkForUpdates_IntervalDays < 0)
+{
+	checkForUpdates_IntervalDays := 7
+	IniWrite, %checkForUpdates_IntervalDays%, %iniFile%, Updates, checkForUpdates_IntervalDays
+}
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Check for Updates
+
+if (checkForUpdates)
+{
+	IniRead, lastUpdateCheck, %iniFile%, Updates, lastUpdateCheck, 1900
+
+	daysSinceLastUpdate := A_Now
+	EnvSub, daysSinceLastUpdate, %lastUpdateCheck%, Days
+Debug("Last update check: " lastUpdateCheck "; (days:) " daysSinceLastUpdate)
+
+	if (daysSinceLastUpdate >= checkForUpdates_IntervalDays)
+	{
+		CheckForUpdates()
+	}
 }
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -92,12 +126,6 @@ Menu, Tray, Tip, % ProgramTitle
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Setup
-
-if (debug)
-{
-	global DebugInfo
-	CreateDebugWindow()
-}
 
 TrackedWindows := []
 LastOperation := Operation.None
@@ -428,15 +456,13 @@ AboutGuiEscape(hwnd)
 
 Tray_Update(itemName, itemPos, menuName)
 {
-	global ProgramTitle, Build
-	Run, https://github.com/benallred/SnapX/releases/latest
-	if (A_IsCompiled)
+	global ProgramTitle
+	
+	updateFound := CheckForUpdates()
+	
+	if (!updateFound)
 	{
-		MsgBox, 0x40040, % ProgramTitle, % "You are running version " Build.version ; 0x40 = Info, 0x40000 = always on top
-	}
-	else
-	{
-		MsgBox, 0x40030, % ProgramTitle, % "You are not running a compiled version" ; 0x30 = Exclamation, 0x40000 = always on top
+		MsgBox, 0x40, % ProgramTitle " Up To Date", % "You are running the latest version of " ProgramTitle "." ; 0x40 = Info
 	}
 }
 
@@ -483,6 +509,54 @@ return
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Helper Functions
+
+CheckForUpdates()
+{
+	global iniFile, lastUpdateCheck, ProgramTitle, Build
+	
+	updateFound := false
+	latestRelease := ""
+Debug("Checking for updates")
+	
+	try
+	{
+		whr := ComObjCreate("WinHttp.WinHttpRequest.5.1")
+		whr.Open("GET", "https://raw.githubusercontent.com/benallred/SnapX/master/Build.ahk", true)
+		whr.Send()
+		whr.WaitForResponse(10)
+		latestRelease := whr.ResponseText
+Debug("GET succeeded")
+	}
+	catch
+	{
+Debug("GET failed")
+	}
+	
+Debug("Latest: " latestRelease)
+	
+	if (InStr(latestRelease, "Build := ", true) == 1)
+	{
+		RegExMatch(latestRelease, "O)version\s*:\s*""(.+?)""", match)
+		newVersion := match.Value(1)
+Debug("Old version: " Build.version)
+Debug("New version: " newVersion)
+
+		if (newVersion != Build.version)
+		{
+			updateFound := true
+			MsgBox, 0x44, % ProgramTitle " Update Available", % ProgramTitle " version " newVersion " is available.`n`nWould you like to open the download page now?" ; 0x4 = Yes/No; 0x40 = Info
+			IfMsgBox Yes
+			{
+				Run, https://github.com/benallred/SnapX/releases/latest
+			}
+		}
+	}
+	
+	lastUpdateCheck := A_Now
+	IniWrite, %lastUpdateCheck%, %iniFile%, Updates, lastUpdateCheck
+	
+	return updateFound
+}
 
 GetMonitorId(hwnd)
 {
@@ -618,6 +692,8 @@ class SizeOf
 	static Long := SizeOf.Int
 	static Point := SizeOf.Long * 2
 	static Rect := SizeOf.Long * 4
+	static Short := 16 // 8
+	static Variant_Bool := SizeOf.Short
 }
 
 class Operation
