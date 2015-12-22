@@ -15,6 +15,7 @@ SetWorkingDir %A_ScriptDir%  ; Ensures a consistent starting directory.
 ;; Constants
 
 ProgramTitle := "SnapX"
+ProgramDescription := "Replacement for Windows/Aero Snap"
 Build := { version: "" }
 #Include *i Build.ahk
 
@@ -69,6 +70,26 @@ IniRead, verticalSections, %iniFile%, Settings, verticalSections, 0
 if (!verticalSections || verticalSections < 1)
 {
 	verticalSections := 1
+}
+
+IniRead, runOnStartup, %iniFile%, Settings, runOnStartup, -1
+if (runOnStartup < 0)
+{
+	runOnStartup := 1
+	IniWrite, %runOnStartup%, %iniFile%, Settings, runOnStartup
+}
+
+startupLinkFile := A_Startup "\" ProgramTitle ".lnk"
+if (runOnStartup > 0)
+{
+	IfNotExist, % startupLinkFile
+	{
+   	FileCreateShortcut, % A_ScriptFullPath, % startupLinkFile, % A_ScriptDir, , % ProgramDescription, % A_IsCompiled ? A_ScriptFullPath : StrReplace(A_ScriptFullPath, ".ahk", ".ico")
+	}
+}
+else ; if (runOnStartup == 0)
+{
+	FileDelete, % startupLinkFile
 }
 
 IniRead, checkForUpdates, %iniFile%, Updates, checkForUpdates, -1
@@ -423,7 +444,7 @@ Tray_Noop(itemName, itemPos, menuName)
 
 Tray_About(itemName, itemPos, menuName)
 {
-	Global ProgramTitle, Build, debug
+	Global ProgramTitle, ProgramDescription, Build, debug
 	
 	Gui, About:New, -MaximizeBox
 	
@@ -442,7 +463,7 @@ Tray_About(itemName, itemPos, menuName)
 	
 	Gui, About:Margin, , 10
 	Gui, About:Font, s12
-	Gui, About:Add, Text, , Replacement for Windows/Aero Snap.
+	Gui, About:Add, Text, , % ProgramDescription
 	Gui, About:Add, Link, , Website: <a href="https://github.com/benallred/SnapX">https://github.com/benallred/SnapX</a>
 	
 	Gui, About:Margin, , 18
