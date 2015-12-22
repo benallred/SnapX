@@ -4,18 +4,14 @@
 SendMode Input  ; Recommended for new scripts due to its superior speed and reliability.
 SetWorkingDir %A_ScriptDir%  ; Ensures a consistent starting directory.
 
-#include Include\WinGetPosEx.ahk
-#include Include\Const_WinUser.ahk
+#Include Include\WinGetPosEx.ahk
+#Include Include\Const_WinUser.ahk
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Notes
-;; #=Win; ^=Ctrl; +=Shift; !=Alt
+#Include Modules\Settings.ahk
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Constants
 
-ProgramTitle := "SnapX"
-ProgramDescription := "Replacement for Windows/Aero Snap"
 Build := { version: "" }
 #Include *i Build.ahk
 
@@ -32,92 +28,26 @@ if not A_IsAdmin
 }
 
 SoundPlay *64
-TrayTip, % ProgramTitle, Loaded
+TrayTip, % Settings.programTitle, Loaded
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Read Settings
+Settings := new Settings()
 
-iniFile := ProgramTitle ".ini"
-
-IfNotExist %iniFile%
-{
-	FileAppend, % ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;`n", % iniFile
-	FileAppend, % ";; Make sure to reload " ProgramTitle " after making changes (right-click tray menu > Reload).`n", % iniFile
-	FileAppend, % ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;`n", % iniFile
-}
-
-IniRead, debug, %iniFile%, Settings, debug, 0
-if (debug)
+if (Settings.debug)
 {
 	global DebugInfo
 	CreateDebugWindow()
 }
 
-IniRead, horizontalSections, %iniFile%, Settings, horizontalSections, 0
-if (!horizontalSections || horizontalSections < 2)
-{
-	SetTimer, ChangeButtonNames_HorizontalSections, 50
-	MsgBox, 4, %ProgramTitle% Settings, This is your first time running %ProgramTitle%, by Ben Allred.`n`nPlease select your desired horizontal grid size.`n`nThis setting can be changed via the %iniFile% file.`n(Access this via the icon in the system tray.)
-	IfMsgBox, Yes
-		horizontalSections := 4
-	else ; No
-		horizontalSections := 3
-
-	IniWrite, %horizontalSections%, %iniFile%, Settings, horizontalSections
-}
-
-IniRead, verticalSections, %iniFile%, Settings, verticalSections, 0
-if (!verticalSections || verticalSections < 1)
-{
-	verticalSections := 1
-}
-
-IniRead, runOnStartup, %iniFile%, Settings, runOnStartup, -1
-if (runOnStartup < 0)
-{
-	runOnStartup := 1
-	IniWrite, %runOnStartup%, %iniFile%, Settings, runOnStartup
-}
-
-startupLinkFile := A_Startup "\" ProgramTitle ".lnk"
-if (runOnStartup > 0)
-{
-	IfNotExist, % startupLinkFile
-	{
-   	FileCreateShortcut, % A_ScriptFullPath, % startupLinkFile, % A_ScriptDir, , % ProgramDescription, % A_IsCompiled ? A_ScriptFullPath : StrReplace(A_ScriptFullPath, ".ahk", ".ico")
-	}
-}
-else ; if (runOnStartup == 0)
-{
-	FileDelete, % startupLinkFile
-}
-
-IniRead, checkForUpdates, %iniFile%, Updates, checkForUpdates, -1
-if (checkForUpdates < 0)
-{
-	checkForUpdates := 1
-	IniWrite, %checkForUpdates%, %iniFile%, Updates, checkForUpdates
-}
-
-IniRead, checkForUpdates_IntervalDays, %iniFile%, Updates, checkForUpdates_IntervalDays, -1
-if (checkForUpdates_IntervalDays < 0)
-{
-	checkForUpdates_IntervalDays := 7
-	IniWrite, %checkForUpdates_IntervalDays%, %iniFile%, Updates, checkForUpdates_IntervalDays
-}
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Check for Updates
 
-if (checkForUpdates)
+if (Settings.checkForUpdates)
 {
-	IniRead, lastUpdateCheck, %iniFile%, Updates, lastUpdateCheck, 1900
-
 	daysSinceLastUpdate := A_Now
-	EnvSub, daysSinceLastUpdate, %lastUpdateCheck%, Days
-Debug("Last update check: " lastUpdateCheck "; (days:) " daysSinceLastUpdate)
+	EnvSub, daysSinceLastUpdate, % Settings.lastUpdateCheck, Days
+Debug("Last update check: " Settings.lastUpdateCheck "; (days:) " daysSinceLastUpdate)
 
-	if (daysSinceLastUpdate >= checkForUpdates_IntervalDays)
+	if (daysSinceLastUpdate >= Settings.checkForUpdates_IntervalDays)
 	{
 		CheckForUpdates()
 	}
@@ -126,9 +56,8 @@ Debug("Last update check: " lastUpdateCheck "; (days:) " daysSinceLastUpdate)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Tray Menu
 
-Menu, Tray, Add, % ProgramTitle, Tray_About
-Menu, Tray, Icon, % ProgramTitle, shell32.dll, 160
-;Menu, Tray, Disable, % ProgramTitle
+Menu, Tray, Add, % Settings.programTitle, Tray_About
+Menu, Tray, Icon, % Settings.programTitle, shell32.dll, 160
 Menu, Tray, Add, &About, Tray_About
 Menu, Tray, Icon, &About, shell32.dll, 222 ; other options: 155, 176, 211, 222, 225, 278
 Menu, Tray, Add, Chec&k for update, Tray_Update
@@ -142,8 +71,8 @@ Menu, Tray, Add, S&uspend, Tray_Suspend
 Menu, Tray, Icon, S&uspend, shell32.dll, 145 ; other options: 238, 220
 Menu, Tray, Add, E&xit, Tray_Exit
 Menu, Tray, Icon, E&xit, shell32.dll, 132
-Menu, Tray, Default, % ProgramTitle
-Menu, Tray, Tip, % ProgramTitle
+Menu, Tray, Default, % Settings.programTitle
+Menu, Tray, Tip, % Settings.programTitle
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Setup
@@ -158,7 +87,7 @@ OnExit("ExitFunc")
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Hotkeys
 
-#If debug
+#If Settings.debug
 #`::Reload ; for ease of testing during development
 #If
 
@@ -175,7 +104,7 @@ OnExit("ExitFunc")
 
 MoveWindow(horizontalDirection, horizontalSize)
 {
-	global TrackedWindows, LastOperation, LastWindowHandle, StillHoldingWinKey, horizontalSections, verticalSections
+	global TrackedWindows, LastOperation, LastWindowHandle, StillHoldingWinKey
 	
 	; state: minimized and LWin not released yet
 	if (LastOperation == Operation.Minimized && StillHoldingWinKey)
@@ -232,8 +161,8 @@ Debug("   action: minimize")
 	mon := new SnapMonitor(monitorId)
 	
 	WinGet, minMaxState, MinMax, A
-	widthFactor  := mon.workarea.w / horizontalSections
-	heightFactor := mon.workarea.h / verticalSections
+	widthFactor  := mon.workarea.w / Settings.horizontalSections
+	heightFactor := mon.workarea.h / Settings.verticalSections
 	
 	; state: minimized
 	if (minMaxState < 0)
@@ -270,7 +199,7 @@ Debug("   action: restore snapped")
 	{
 Debug("state: snapped")
 		; state: width == max - 1
-		if (window.grid.width >= horizontalSections - 1)
+		if (window.grid.width >= Settings.horizontalSections - 1)
 		{
 			; action: win+up
 			if (horizontalSize > 0)
@@ -306,7 +235,7 @@ Debug("   action: restore unsnapped")
 Debug("   action: " (horizontalDirection ? "move" : horizontalSize ? "resize" : "what?"))
 		LastOperation := Operation.Moved
 		window.grid.left := window.grid.left + horizontalDirection
-		window.grid.left := window.grid.left + (horizontalSize < 0 && window.grid.left + window.grid.width >= horizontalSections ? 1 : 0) ; keep right edge attached to monitor edge if shrinking
+		window.grid.left := window.grid.left + (horizontalSize < 0 && window.grid.left + window.grid.width >= Settings.horizontalSections ? 1 : 0) ; keep right edge attached to monitor edge if shrinking
 		window.grid.top := 0
 		window.grid.width := window.grid.width + horizontalSize
 		window.grid.height := 1
@@ -335,23 +264,23 @@ Debug("   action: snap")
 		LastOperation := Operation.Snapped
 		window.snapped := 1
 ; Snap based on left/right edges and left/right direction pushed
-		window.grid.left := Floor(((horizontalDirection < 0 ? window.position.x : horizontalDirection > 0 ? window.position.r : window.position.cx) - mon.workarea.x) / mon.workarea.w * horizontalSections)
+		window.grid.left := Floor(((horizontalDirection < 0 ? window.position.x : horizontalDirection > 0 ? window.position.r : window.position.cx) - mon.workarea.x) / mon.workarea.w * Settings.horizontalSections)
 ; Original - Snap based on center coordinates
-;		window.grid.left := Floor((window.position.cx - mon.workarea.x) / mon.workarea.w * horizontalSections)
+;		window.grid.left := Floor((window.position.cx - mon.workarea.x) / mon.workarea.w * Settings.horizontalSections)
 ; Always snaps to current centercoords position, regardless of snap direction pushed
 ;		(do nothing more)
 ; Does not snap to current centercoords position - always left or right of current centercoords (unless against edge, of course)
 ;		window.grid.left := window.grid.left + horizontalDirection
 ; Shift one more snap direction if starting snap position is on opposite side of the screen from indicated direction
 ;		window.grid.left := window.grid.left
-;									+ ((horizontalSections - 1) / 2 - window.grid.left > 0 == horizontalDirection > 0 ; if snap position is on the opposite side of the screen as horizontal direction pushed (snap is 0 or 1 and win+right pushed; or snap is 2 or 3 and win+left pushed)
-;										|| (horizontalSections - 1) / 2 - window.grid.left == 0 ; or if snap position is exact center (forward-compatibility for allowing horizontalSections == 3 (or any odd number))
+;									+ ((Settings.horizontalSections - 1) / 2 - window.grid.left > 0 == horizontalDirection > 0 ; if snap position is on the opposite side of the screen as horizontal direction pushed (snap is 0 or 1 and win+right pushed; or snap is 2 or 3 and win+left pushed)
+;										|| (Settings.horizontalSections - 1) / 2 - window.grid.left == 0 ; or if snap position is exact center (forward-compatibility for allowing horizontalSections == 3 (or any odd number))
 ;										 ? horizontalDirection ; shift one more snap indicated direction
 ;										 : 0)
 ; Always snap against edge in direction pushed
-;		window.grid.left := horizontalDirection < 0 ? 0 : horizontalDirection > 0 ? horizontalSections - 1 : window.grid.left
+;		window.grid.left := horizontalDirection < 0 ? 0 : horizontalDirection > 0 ? Settings.horizontalSections - 1 : window.grid.left
 ; Always snap against center edge in direction pushed
-;		window.grid.left := horizontalDirection < 0 ? horizontalSections // 2 - 1 : horizontalDirection > 0 ? (horizontalSections + 1) // 2 : window.grid.left
+;		window.grid.left := horizontalDirection < 0 ? Settings.horizontalSections // 2 - 1 : horizontalDirection > 0 ? (Settings.horizontalSections + 1) // 2 : window.grid.left
 		window.grid.top := 0
 		window.grid.width := 1 + horizontalSize
 		window.grid.height := 1
@@ -363,7 +292,7 @@ Debug("   action: snap")
 	
 	; Enforce snap boundaries
 	
-	if window.grid.left + window.grid.width > horizontalSections
+	if window.grid.left + window.grid.width > Settings.horizontalSections
 	{
 		window.grid.left := window.grid.left - 1
 	}
@@ -402,7 +331,7 @@ ExitFunc(exitReason, exitCode)
 	local monitorId, mon
 	local minMaxState
 	
-	TrayTip, % ProgramTitle, Resetting snapped windows to their pre-snap size and position
+	TrayTip, % Settings.programTitle, Resetting snapped windows to their pre-snap size and position
 	
 	for i, window in TrackedWindows
 	{
@@ -444,18 +373,18 @@ Tray_Noop(itemName, itemPos, menuName)
 
 Tray_About(itemName, itemPos, menuName)
 {
-	Global ProgramTitle, ProgramDescription, Build, debug
+	Global Build
 	
 	Gui, About:New, -MaximizeBox
 	
 	Gui, About:Font, s24 bold
-	Gui, About:Add, Text, , % ProgramTitle
+	Gui, About:Add, Text, , % Settings.programTitle
 	
 	Gui, About:Margin, , 0
 	Gui, About:Font
 	Gui, About:Add, Text, , % (Build.version ? "v" Build.version : "AutoHotkey script")
 									. ", " (A_PtrSize * 8) "-bit"
-									. (debug ? ", Debug enabled" : "")
+									. (Settings.debug ? ", Debug enabled" : "")
 									. (A_IsCompiled ? "" : ", not compiled")
 									. (A_IsAdmin ? "" : ", not running as administrator") ; shouldn't ever display
 	
@@ -463,11 +392,11 @@ Tray_About(itemName, itemPos, menuName)
 	
 	Gui, About:Margin, , 10
 	Gui, About:Font, s12
-	Gui, About:Add, Text, , % ProgramDescription
+	Gui, About:Add, Text, , % Settings.programDescription
 	Gui, About:Add, Link, , Website: <a href="https://github.com/benallred/SnapX">https://github.com/benallred/SnapX</a>
 	
 	Gui, About:Margin, , 18
-	Gui, About:Show, , % ProgramTitle
+	Gui, About:Show, , % Settings.programTitle
 }
 
 AboutGuiEscape(hwnd)
@@ -477,20 +406,17 @@ AboutGuiEscape(hwnd)
 
 Tray_Update(itemName, itemPos, menuName)
 {
-	global ProgramTitle
-	
 	updateFound := CheckForUpdates()
 	
 	if (!updateFound)
 	{
-		MsgBox, 0x40, % ProgramTitle " Up To Date", % "You are running the latest version of " ProgramTitle "." ; 0x40 = Info
+		MsgBox, 0x40, % Settings.programTitle " Up To Date", % "You are running the latest version of " Settings.programTitle "." ; 0x40 = Info
 	}
 }
 
 Tray_Settings(itemName, itemPos, menuName)
 {
-	global iniFile
-	Run, notepad.exe %iniFile%
+	Run, % "notepad.exe " Settings.iniFile
 }
 
 Tray_Reload(itemName, itemPos, menuName)
@@ -519,21 +445,12 @@ Tray_Exit(itemName, itemPos, menuName)
 	ExitApp
 }
 
-ChangeButtonNames_HorizontalSections:
-	IfWinNotExist, %ProgramTitle% Settings
-		return
-	SetTimer, ChangeButtonNames_HorizontalSections, Off
-	WinActivate
-	ControlSetText, Button1, &4
-	ControlSetText, Button2, &3
-return
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Helper Functions
 
 CheckForUpdates()
 {
-	global iniFile, lastUpdateCheck, ProgramTitle, Build
+	global Build
 	
 	updateFound := false
 	latestRelease := ""
@@ -565,7 +482,7 @@ Debug("New version: " newVersion)
 		if (newVersion != Build.version)
 		{
 			updateFound := true
-			MsgBox, 0x44, % ProgramTitle " Update Available", % ProgramTitle " version " newVersion " is available.`n`nWould you like to open the download page now?" ; 0x4 = Yes/No; 0x40 = Info
+			MsgBox, 0x44, % Settings.programTitle " Update Available", % Settings.programTitle " version " newVersion " is available.`n`nWould you like to open the download page now?" ; 0x4 = Yes/No; 0x40 = Info
 			IfMsgBox Yes
 			{
 				Run, https://github.com/benallred/SnapX/releases/latest
@@ -573,8 +490,8 @@ Debug("New version: " newVersion)
 		}
 	}
 	
-	lastUpdateCheck := A_Now
-	IniWrite, %lastUpdateCheck%, %iniFile%, Updates, lastUpdateCheck
+	Settings.lastUpdateCheck := A_Now
+	Settings.WriteSetting("lastUpdateCheck", "Updates")
 	
 	return updateFound
 }
@@ -790,10 +707,9 @@ class SnapWindow
 
 CreateDebugWindow()
 {
-	global ProgramTitle
 	Gui, +AlwaysOnTop
 	Gui, Add, ListView, vDebugInfo r20 w300 -Hdr, DebugId|Debug Info
-	Gui, Show, x10 y10, %ProgramTitle% Debug Info
+	Gui, Show, x10 y10, % Settings.programTitle " Debug Info"
 }
 
 Debug(text)
