@@ -8,6 +8,7 @@ SetWorkingDir %A_ScriptDir%  ; Ensures a consistent starting directory.
 #Include Include\Const_WinUser.ahk
 
 #Include Modules\Settings.ahk
+#Include Modules\Debug.ahk
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Constants
@@ -31,12 +32,7 @@ SoundPlay *64
 TrayTip, % Settings.programTitle, Loaded
 
 Settings := new Settings()
-
-if (Settings.debug)
-{
-	global DebugInfo
-	CreateDebugWindow()
-}
+Debug := new Debug(Settings)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Check for Updates
@@ -45,7 +41,7 @@ if (Settings.checkForUpdates)
 {
 	daysSinceLastUpdate := A_Now
 	EnvSub, daysSinceLastUpdate, % Settings.lastUpdateCheck, Days
-Debug("Last update check: " Settings.lastUpdateCheck "; (days:) " daysSinceLastUpdate)
+Debug.write("Last update check: " Settings.lastUpdateCheck "; (days:) " daysSinceLastUpdate)
 
 	if (daysSinceLastUpdate >= Settings.checkForUpdates_IntervalDays)
 	{
@@ -109,11 +105,11 @@ MoveWindow(horizontalDirection, horizontalSize)
 	; state: minimized and LWin not released yet
 	if (LastOperation == Operation.Minimized && StillHoldingWinKey)
 	{
-Debug("state: minimized")
+Debug.write("state: minimized")
 		; action: win+up
 		if (horizontalSize > 0)
 		{
-Debug("   action: restore")
+Debug.write("   action: restore")
 			StillHoldingWinKey := 0
 			LastOperation := Operation.Restored
 			WinRestore, % "ahk_id " LastWindowHandle  ; WinRestore followed by WinActivate, with ahk_id specified explicitely on each, was the only way I could get
@@ -136,8 +132,8 @@ Debug("   action: restore")
 			; action: win+down
 			if (horizontalSize < 0)
 			{
-Debug("state: restored")
-Debug("   action: minimize")
+Debug.write("state: restored")
+Debug.write("   action: minimize")
 				LastWindowHandle := activeWindowHandle
 				MinimizeAndKeyWaitLWin()
 			}
@@ -167,11 +163,11 @@ Debug("   action: minimize")
 	; state: minimized
 	if (minMaxState < 0)
 	{
-Debug("state: minimized")
+Debug.write("state: minimized")
 		; action: win+up
 		if (horizontalSize > 0)
 		{
-Debug("   action: restore")
+Debug.write("   action: restore")
 			LastOperation := Operation.Restored
 			WinRestore, A
 		}
@@ -182,11 +178,11 @@ Debug("   action: restore")
 	; state: maximized
 	else if (minMaxState > 0)
 	{
-Debug("state: maximized")
+Debug.write("state: maximized")
 		; action: win+down
 		if (horizontalSize < 0)
 		{
-Debug("   action: restore snapped")
+Debug.write("   action: restore snapped")
 			LastOperation := Operation.RestoredSnapped
 			WinRestore, A
 		}
@@ -197,14 +193,14 @@ Debug("   action: restore snapped")
 	; state: snapped
 	else if (window.snapped == 1)
 	{
-Debug("state: snapped")
+Debug.write("state: snapped")
 		; state: width == max - 1
 		if (window.grid.width >= Settings.horizontalSections - 1)
 		{
 			; action: win+up
 			if (horizontalSize > 0)
 			{
-Debug("   action: maximize")
+Debug.write("   action: maximize")
 				LastOperation := Operation.Maximized
 				WinMaximize, A
 				return
@@ -219,7 +215,7 @@ Debug("   action: maximize")
 			; action: win+down
 			if (horizontalSize < 0)
 			{
-Debug("   action: restore unsnapped")
+Debug.write("   action: restore unsnapped")
 				window.snapped := 0
 				WinMove, A, , window.restoredpos.left   * mon.workarea.w + mon.workarea.x
 								, window.restoredpos.top    * mon.workarea.h + mon.workarea.y
@@ -232,7 +228,7 @@ Debug("   action: restore unsnapped")
 		}
 		
 		; action: all
-Debug("   action: " (horizontalDirection ? "move" : horizontalSize ? "resize" : "what?"))
+Debug.write("   action: " (horizontalDirection ? "move" : horizontalSize ? "resize" : "what?"))
 		LastOperation := Operation.Moved
 		window.grid.left := window.grid.left + horizontalDirection
 		window.grid.left := window.grid.left + (horizontalSize < 0 && window.grid.left + window.grid.width >= Settings.horizontalSections ? 1 : 0) ; keep right edge attached to monitor edge if shrinking
@@ -244,14 +240,14 @@ Debug("   action: " (horizontalDirection ? "move" : horizontalSize ? "resize" : 
 	; state: restored
 	else if (window.snapped == 0)
 	{
-Debug("state: restored")
+Debug.write("state: restored")
 		; action: win+down
 		if (horizontalSize < 0)
 		{
 			; state: minimizable
 			if (activeWindowStyle & WS.MINIMIZEBOX) ; if window is minimizable
 			{
-Debug("   action: minimize")
+Debug.write("   action: minimize")
 				MinimizeAndKeyWaitLWin()
 			}
 			return
@@ -260,7 +256,7 @@ Debug("   action: minimize")
 		window.UpdatePosition()
 		
 		; action: anything else
-Debug("   action: snap")
+Debug.write("   action: snap")
 		LastOperation := Operation.Snapped
 		window.snapped := 1
 ; Snap based on left/right edges and left/right direction pushed
@@ -454,7 +450,7 @@ CheckForUpdates()
 	
 	updateFound := false
 	latestRelease := ""
-Debug("Checking for updates")
+Debug.write("Checking for updates")
 	
 	try
 	{
@@ -463,21 +459,21 @@ Debug("Checking for updates")
 		whr.Send()
 		whr.WaitForResponse(10)
 		latestRelease := whr.ResponseText
-Debug("GET succeeded")
+Debug.write("GET succeeded")
 	}
 	catch
 	{
-Debug("GET failed")
+Debug.write("GET failed")
 	}
 	
-Debug("Latest: " latestRelease)
+Debug.write("Latest: " latestRelease)
 	
 	if (InStr(latestRelease, "Build := ", true) == 1)
 	{
 		RegExMatch(latestRelease, "O)version\s*:\s*""(.+?)""", match)
 		newVersion := match.Value(1)
-Debug("Old version: " Build.version)
-Debug("New version: " newVersion)
+Debug.write("Old version: " Build.version)
+Debug.write("New version: " newVersion)
 
 		if (newVersion != Build.version)
 		{
@@ -661,7 +657,7 @@ class SizePosition
 		this.cy := y && h ? y + h / 2 : 0
 		this.xo := xo
 		this.yo := yo
-;Debug("x:" this.x " y:" this.y " w:" this.w " h:" h " r:" this.r " b:" this.b)
+;Debug.write("x:" this.x " y:" this.y " w:" this.w " h:" h " r:" this.r " b:" this.b)
 	}
 }
 
@@ -677,8 +673,8 @@ class SnapMonitor
 		SysGet, monWorkArea, MonitorWorkArea, % monitorId
 		this.workarea := new SizePosition(monWorkAreaLeft, monWorkAreaTop, , , monWorkAreaRight, monWorkAreaBottom, monWorkAreaLeft - monAreaLeft, monWorkAreaTop - monAreaTop)
 
-;Debug("a.x:" this.area.x " a.y:" this.area.y " a.w:" this.area.w " a.h:" this.area.h " a.r:" this.area.r " a.b:" this.area.b)
-;Debug("a.x:" this.workarea.x " a.y:" this.workarea.y " a.w:" this.workarea.w " a.h:" this.workarea.h " a.r:" this.workarea.r " a.b:" this.workarea.b)
+;Debug.write("a.x:" this.area.x " a.y:" this.area.y " a.w:" this.area.w " a.h:" this.area.h " a.r:" this.area.r " a.b:" this.area.b)
+;Debug.write("a.x:" this.workarea.x " a.y:" this.workarea.y " a.w:" this.workarea.w " a.h:" this.workarea.h " a.r:" this.workarea.r " a.b:" this.workarea.b)
 	}
 }
 
@@ -700,39 +696,4 @@ class SnapWindow
 		WinGetPosEx(this.handle, , , , , xOffset, yOffset)
 		this.position := new SizePosition(winX, winY, winW, winH, , , xOffset, yOffset)
 	}
-}
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Debug
-
-CreateDebugWindow()
-{
-	Gui, +AlwaysOnTop
-	Gui, Add, ListView, vDebugInfo r20 w300 -Hdr, DebugId|Debug Info
-	Gui, Show, x10 y10, % Settings.programTitle " Debug Info"
-}
-
-Debug(text)
-{
-	lastRow := LV_Add("", , text)
-	LV_Modify(lastRow, "Vis", lastRow)
-	LV_ModifyCol(1, "Auto")
-}
-
-DebugArray(array, itemProperty)
-{
-	local i
-	local item
-	local s
-	s := ""
-	for i, item in array
-	{
-		if (s <> "")
-		{
-			s := s ", "
-		}
-		
-		s := s item[itemProperty]
-	}
-	Debug(s)
 }
