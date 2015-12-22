@@ -9,6 +9,7 @@ SetWorkingDir %A_ScriptDir%  ; Ensures a consistent starting directory.
 
 #Include Modules\Settings.ahk
 #Include Modules\Debug.ahk
+#Include Modules\Updates.ahk
 #Include Modules\Functions.ahk
 #Include Modules\Classes.ahk
 
@@ -35,21 +36,7 @@ TrayTip, % Settings.programTitle, Loaded
 
 Settings := new Settings()
 Debug := new Debug(Settings)
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Check for Updates
-
-if (Settings.checkForUpdates)
-{
-	daysSinceLastUpdate := A_Now
-	EnvSub, daysSinceLastUpdate, % Settings.lastUpdateCheck, Days
-Debug.write("Last update check: " Settings.lastUpdateCheck "; (days:) " daysSinceLastUpdate)
-
-	if (daysSinceLastUpdate >= Settings.checkForUpdates_IntervalDays)
-	{
-		CheckForUpdates()
-	}
-}
+UpdateChecker := new UpdateChecker(Settings, Build)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Tray Menu
@@ -404,7 +391,7 @@ AboutGuiEscape(hwnd)
 
 Tray_Update(itemName, itemPos, menuName)
 {
-	updateFound := CheckForUpdates()
+	updateFound := UpdateChecker.checkForUpdates()
 	
 	if (!updateFound)
 	{
@@ -441,55 +428,4 @@ Tray_Suspend(itemName, itemPos, menuName)
 Tray_Exit(itemName, itemPos, menuName)
 {
 	ExitApp
-}
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Helper Functions
-
-CheckForUpdates()
-{
-	global Build
-	
-	updateFound := false
-	latestRelease := ""
-Debug.write("Checking for updates")
-	
-	try
-	{
-		whr := ComObjCreate("WinHttp.WinHttpRequest.5.1")
-		whr.Open("GET", "https://raw.githubusercontent.com/benallred/SnapX/master/Build.ahk", true)
-		whr.Send()
-		whr.WaitForResponse(10)
-		latestRelease := whr.ResponseText
-Debug.write("GET succeeded")
-	}
-	catch
-	{
-Debug.write("GET failed")
-	}
-	
-Debug.write("Latest: " latestRelease)
-	
-	if (InStr(latestRelease, "Build := ", true) == 1)
-	{
-		RegExMatch(latestRelease, "O)version\s*:\s*""(.+?)""", match)
-		newVersion := match.Value(1)
-Debug.write("Old version: " Build.version)
-Debug.write("New version: " newVersion)
-
-		if (newVersion != Build.version)
-		{
-			updateFound := true
-			MsgBox, 0x44, % Settings.programTitle " Update Available", % Settings.programTitle " version " newVersion " is available.`n`nWould you like to open the download page now?" ; 0x4 = Yes/No; 0x40 = Info
-			IfMsgBox Yes
-			{
-				Run, https://github.com/benallred/SnapX/releases/latest
-			}
-		}
-	}
-	
-	Settings.lastUpdateCheck := A_Now
-	Settings.WriteSetting("lastUpdateCheck", "Updates")
-	
-	return updateFound
 }
