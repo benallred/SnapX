@@ -1,6 +1,6 @@
 GetMonitorId(hwnd)
 {
-	local mon, winCenterX, winCenterY
+	local wp, mon, winCenterX, winCenterY
 	
 	GetWindowPlacement(hwnd, wp) ; GetWindowPlacement returns restored position of window (need this in case hwnd is minimized)
 	
