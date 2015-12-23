@@ -18,6 +18,7 @@ SetWorkingDir %A_ScriptDir%  ; Ensures a consistent starting directory.
 #Include Modules\Functions.ahk
 #Include Modules\Classes.ahk
 #Include Modules\Snapper.ahk
+#Include Modules\AboutGui.ahk
 
 #Include Build.ahk
 
