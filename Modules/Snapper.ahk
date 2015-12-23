@@ -9,20 +9,20 @@ class Snapper
 		this.LastWindowHandle := -1
 		this.StillHoldingWinKey := 0
 		
-		onExitMethod := ObjBindMethod(this, "ExitFunc")
+		onExitMethod := ObjBindMethod(this, "exitFunc")
 		OnExit(onExitMethod)
 	}
 	
-	MoveWindow(horizontalDirection, horizontalSize)
+	moveWindow(horizontalDirection, horizontalSize)
 	{
 		; state: minimized and LWin not released yet
 		if (this.LastOperation == Operation.Minimized && this.StillHoldingWinKey)
 		{
-Debug.write("state: minimized")
+debug.write("state: minimized")
 			; action: win+up
 			if (horizontalSize > 0)
 			{
-Debug.write("   action: restore")
+debug.write("   action: restore")
 				this.StillHoldingWinKey := 0
 				this.LastOperation := Operation.Restored
 				WinRestore, % "ahk_id " this.LastWindowHandle  ; WinRestore followed by WinActivate, with ahk_id specified explicitely on each, was the only way I could get
@@ -45,10 +45,10 @@ Debug.write("   action: restore")
 				; action: win+down
 				if (horizontalSize < 0)
 				{
-Debug.write("state: restored")
-Debug.write("   action: minimize")
+debug.write("state: restored")
+debug.write("   action: minimize")
 					this.LastWindowHandle := activeWindowHandle
-					this.MinimizeAndKeyWaitLWin()
+					this.minimizeAndKeyWaitLWin()
 				}
 				; action: anything else
 				; (continue)
@@ -76,11 +76,11 @@ Debug.write("   action: minimize")
 		; state: minimized
 		if (minMaxState < 0)
 		{
-Debug.write("state: minimized")
+debug.write("state: minimized")
 			; action: win+up
 			if (horizontalSize > 0)
 			{
-Debug.write("   action: restore")
+debug.write("   action: restore")
 				this.LastOperation := Operation.Restored
 				WinRestore, A
 			}
@@ -91,11 +91,11 @@ Debug.write("   action: restore")
 		; state: maximized
 		else if (minMaxState > 0)
 		{
-Debug.write("state: maximized")
+debug.write("state: maximized")
 			; action: win+down
 			if (horizontalSize < 0)
 			{
-Debug.write("   action: restore snapped")
+debug.write("   action: restore snapped")
 				this.LastOperation := Operation.RestoredSnapped
 				WinRestore, A
 			}
@@ -106,14 +106,14 @@ Debug.write("   action: restore snapped")
 		; state: snapped
 		else if (window.snapped == 1)
 		{
-Debug.write("state: snapped")
+debug.write("state: snapped")
 			; state: width == max - 1
 			if (window.grid.width >= this.settings.horizontalSections - 1)
 			{
 				; action: win+up
 				if (horizontalSize > 0)
 				{
-Debug.write("   action: maximize")
+debug.write("   action: maximize")
 					this.LastOperation := Operation.Maximized
 					WinMaximize, A
 					return
@@ -128,7 +128,7 @@ Debug.write("   action: maximize")
 				; action: win+down
 				if (horizontalSize < 0)
 				{
-Debug.write("   action: restore unsnapped")
+debug.write("   action: restore unsnapped")
 					window.snapped := 0
 					WinMove, A, , window.restoredpos.left   * mon.workarea.w + mon.workarea.x
 									, window.restoredpos.top    * mon.workarea.h + mon.workarea.y
@@ -141,7 +141,7 @@ Debug.write("   action: restore unsnapped")
 			}
 			
 			; action: all
-Debug.write("   action: " (horizontalDirection ? "move" : horizontalSize ? "resize" : "what?"))
+debug.write("   action: " (horizontalDirection ? "move" : horizontalSize ? "resize" : "what?"))
 			this.LastOperation := Operation.Moved
 			window.grid.left := window.grid.left + horizontalDirection
 			window.grid.left := window.grid.left + (horizontalSize < 0 && window.grid.left + window.grid.width >= this.settings.horizontalSections ? 1 : 0) ; keep right edge attached to monitor edge if shrinking
@@ -153,15 +153,15 @@ Debug.write("   action: " (horizontalDirection ? "move" : horizontalSize ? "resi
 		; state: restored
 		else if (window.snapped == 0)
 		{
-Debug.write("state: restored")
+debug.write("state: restored")
 			; action: win+down
 			if (horizontalSize < 0)
 			{
 				; state: minimizable
 				if (activeWindowStyle & WS.MINIMIZEBOX) ; if window is minimizable
 				{
-Debug.write("   action: minimize")
-					this.MinimizeAndKeyWaitLWin()
+debug.write("   action: minimize")
+					this.minimizeAndKeyWaitLWin()
 				}
 				return
 			}
@@ -169,7 +169,7 @@ Debug.write("   action: minimize")
 			window.UpdatePosition()
 			
 			; action: anything else
-Debug.write("   action: snap")
+debug.write("   action: snap")
 			this.LastOperation := Operation.Snapped
 			window.snapped := 1
 ; Snap based on left/right edges and left/right direction pushed
@@ -218,7 +218,7 @@ Debug.write("   action: snap")
 						, window.grid.height * heightFactor + -1*window.position.xo ; + -2*window.position.yo + 1
 	}
 
-	MinimizeAndKeyWaitLWin()
+	minimizeAndKeyWaitLWin()
 	{
 		this.StillHoldingWinKey := 1
 		this.LastOperation := Operation.Minimized
@@ -233,7 +233,7 @@ Debug.write("   action: snap")
 		}
 	}
 
-	ExitFunc(exitReason, exitCode)
+	exitFunc(exitReason, exitCode)
 	{
 		TrayTip, % this.settings.programTitle, Resetting snapped windows to their pre-snap size and position
 		

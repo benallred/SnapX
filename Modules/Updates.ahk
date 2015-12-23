@@ -9,7 +9,7 @@ class UpdateChecker
 		{
 			daysSinceLastUpdate := A_Now
 			EnvSub, daysSinceLastUpdate, % this.settings.lastUpdateCheck, Days
-Debug.write("Last update check: " this.settings.lastUpdateCheck "; (days:) " daysSinceLastUpdate)
+debug.write("Last update check: " this.settings.lastUpdateCheck "; (days:) " daysSinceLastUpdate)
 
 			if (daysSinceLastUpdate >= this.settings.checkForUpdates_IntervalDays)
 			{
@@ -22,7 +22,7 @@ Debug.write("Last update check: " this.settings.lastUpdateCheck "; (days:) " day
 	{
 		updateFound := false
 		latestRelease := ""
-Debug.write("Checking for updates")
+debug.write("Checking for updates")
 		
 		try
 		{
@@ -31,21 +31,21 @@ Debug.write("Checking for updates")
 			whr.Send()
 			whr.WaitForResponse(10)
 			latestRelease := whr.ResponseText
-Debug.write("GET succeeded")
+debug.write("GET succeeded")
 		}
 		catch
 		{
-Debug.write("GET failed")
+debug.write("GET failed")
 		}
 		
-Debug.write("Latest: " latestRelease)
+debug.write("Latest: " latestRelease)
 		
 		if (InStr(latestRelease, "Build := ", true) == 1)
 		{
 			RegExMatch(latestRelease, "O)version\s*:\s*""(.+?)""", match)
 			newVersion := match.Value(1)
-Debug.write("Old version: " this.build.version)
-Debug.write("New version: " newVersion)
+debug.write("Old version: " this.build.version)
+debug.write("New version: " newVersion)
 
 			if (newVersion != this.build.version)
 			{

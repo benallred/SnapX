@@ -1,6 +1,6 @@
 class Tray
 {
-	InitIcon()
+	initIcon()
 	{
 		Menu, Tray, Icon, shell32.dll, 160 ; other options: 16, 253, 255, 306
 		Menu, Tray, NoStandard
@@ -14,32 +14,32 @@ class Tray
 
 		this.InitIcon()
 
-		aboutMethod := ObjBindMethod(this, "Tray_About")
+		aboutMethod := ObjBindMethod(this, "tray_About")
 		Menu, Tray, Add, % this.settings.programTitle, % aboutMethod
 		Menu, Tray, Icon, % this.settings.programTitle, shell32.dll, 160
 
 		Menu, Tray, Add, &About, % aboutMethod
 		Menu, Tray, Icon, &About, shell32.dll, 222 ; other options: 155, 176, 211, 222, 225, 278
 
-		updateMethod := ObjBindMethod(this, "Tray_Update")
+		updateMethod := ObjBindMethod(this, "tray_Update")
 		Menu, Tray, Add, Chec&k for update, % updateMethod
 		Menu, Tray, Icon, Chec&k for update, shell32.dll, 47 ; other options: 47, 123
 
 		Menu, Tray, Add
 
-		settingsMethod := ObjBindMethod(this, "Tray_Settings")
+		settingsMethod := ObjBindMethod(this, "tray_Settings")
 		Menu, Tray, Add, &Settings, % settingsMethod
 		Menu, Tray, Icon, &Settings, shell32.dll, 316
 
-		reloadMethod := ObjBindMethod(this, "Tray_Reload")
+		reloadMethod := ObjBindMethod(this, "tray_Reload")
 		Menu, Tray, Add, &Reload, % reloadMethod
 		Menu, Tray, Icon, &Reload, shell32.dll, 239
 
-		suspendMethod := ObjBindMethod(this, "Tray_Suspend")
+		suspendMethod := ObjBindMethod(this, "tray_Suspend")
 		Menu, Tray, Add, S&uspend, % suspendMethod
 		Menu, Tray, Icon, S&uspend, shell32.dll, 145 ; other options: 238, 220
 
-		exitMethod := ObjBindMethod(this, "Tray_Exit")
+		exitMethod := ObjBindMethod(this, "tray_Exit")
 		Menu, Tray, Add, E&xit, % exitMethod
 		Menu, Tray, Icon, E&xit, shell32.dll, 132
 		
@@ -47,11 +47,11 @@ class Tray
 		Menu, Tray, Tip, % this.settings.programTitle
 	}
 
-	Tray_Noop(itemName, itemPos, menuName)
+	tray_Noop(itemName, itemPos, menuName)
 	{
 	}
 
-	Tray_About(itemName, itemPos, menuName)
+	tray_About(itemName, itemPos, menuName)
 	{
 		Gui, About:New, -MaximizeBox
 		
@@ -77,7 +77,7 @@ class Tray
 		Gui, About:Show, , % this.settings.programTitle
 	}
 
-	Tray_Update(itemName, itemPos, menuName)
+	tray_Update(itemName, itemPos, menuName)
 	{
 		updateFound := this.updateChecker.checkForUpdates()
 		
@@ -87,17 +87,17 @@ class Tray
 		}
 	}
 
-	Tray_Settings(itemName, itemPos, menuName)
+	tray_Settings(itemName, itemPos, menuName)
 	{
 		Run, % "notepad.exe " this.settings.iniFile
 	}
 
-	Tray_Reload(itemName, itemPos, menuName)
+	tray_Reload(itemName, itemPos, menuName)
 	{
 		Reload
 	}
 
-	Tray_Suspend(itemName, itemPos, menuName)
+	tray_Suspend(itemName, itemPos, menuName)
 	{
 		if (A_IsSuspended)
 		{
@@ -113,7 +113,7 @@ class Tray
 		Suspend, Toggle
 	}
 
-	Tray_Exit(itemName, itemPos, menuName)
+	tray_Exit(itemName, itemPos, menuName)
 	{
 		ExitApp
 	}

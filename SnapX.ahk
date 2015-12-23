@@ -4,8 +4,12 @@
 SendMode Input  ; Recommended for new scripts due to its superior speed and reliability.
 SetWorkingDir %A_ScriptDir%  ; Ensures a consistent starting directory.
 
+; Third-party libraries
+
 #Include Include\WinGetPosEx.ahk
 #Include Include\Const_WinUser.ahk
+
+; SnapX modules
 
 #Include Modules\Settings.ahk
 #Include Modules\Debug.ahk
@@ -15,16 +19,11 @@ SetWorkingDir %A_ScriptDir%  ; Ensures a consistent starting directory.
 #Include Modules\Classes.ahk
 #Include Modules\Snapper.ahk
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Constants
+#Include Build.ahk
 
-Build := { version: "" }
-#Include *i Build.ahk
+; Startup
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Script Startup
-
-Tray.InitIcon()
+Tray.initIcon()
 
 if not A_IsAdmin
 {
@@ -35,23 +34,22 @@ if not A_IsAdmin
 SoundPlay *64
 TrayTip, % Settings.programTitle, Loaded
 
-Settings := new Settings()
-Debug := new Debug(Settings)
-UpdateChecker := new UpdateChecker(Settings, Build)
-Tray := new Tray(Settings, Build, UpdateChecker)
-Snapper := new Snapper(Settings)
+settings := new Settings()
+debug := new Debug(settings)
+updateChecker := new UpdateChecker(settings, Build)
+tray := new Tray(settings, Build, updateChecker)
+snapper := new Snapper(settings)
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Hotkeys
+; Hotkeys
 
-#If Settings.debug
+#If settings.debug
 #`::Reload ; for ease of testing during development
 #If
 
-#Left::Snapper.MoveWindow(-1, 0)
+#Left::snapper.moveWindow(-1, 0)
 
-#Right::Snapper.MoveWindow(1, 0)
+#Right::snapper.moveWindow(1, 0)
 
-#Up::Snapper.MoveWindow(0, 1)
+#Up::snapper.moveWindow(0, 1)
 
-#Down::Snapper.MoveWindow(0, -1)
+#Down::snapper.moveWindow(0, -1)
