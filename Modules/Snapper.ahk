@@ -13,13 +13,13 @@ class Snapper
 		OnExit(onExitMethod)
 	}
 	
-	moveWindow(horizontalDirection, horizontalSize)
+	moveWindow(horizontalDirection, horizontalSize, verticalDirection, verticalSize)
 	{
 		; state: minimized and LWin not released yet
 		if (this.LastOperation == Operation.Minimized && this.StillHoldingWinKey)
 		{
 debug.write("state: minimized")
-			; action: win+up
+			; action: increase width
 			if (horizontalSize > 0)
 			{
 debug.write("   action: restore")
@@ -42,7 +42,7 @@ debug.write("   action: restore")
 			; state: minimizable
 			if (activeWindowStyle & WS.MINIMIZEBOX) ; if window is minimizable
 			{
-				; action: win+down
+				; action: decrease width
 				if (horizontalSize < 0)
 				{
 debug.write("state: restored")
@@ -77,7 +77,7 @@ debug.write("   action: minimize")
 		if (minMaxState < 0)
 		{
 debug.write("state: minimized")
-			; action: win+up
+			; action: increase width
 			if (horizontalSize > 0)
 			{
 debug.write("   action: restore")
@@ -92,7 +92,7 @@ debug.write("   action: restore")
 		else if (minMaxState > 0)
 		{
 debug.write("state: maximized")
-			; action: win+down
+			; action: decrease width
 			if (horizontalSize < 0)
 			{
 debug.write("   action: restore snapped")
@@ -107,11 +107,19 @@ debug.write("   action: restore snapped")
 		else if (window.snapped == 1)
 		{
 debug.write("state: snapped")
-			; state: width == max - 1
-			if (window.grid.width >= this.settings.horizontalSections - 1)
+			; state: width == max - 1 && height == max
+			;    or: width == max     && height == anything
+			if (window.grid.width == this.settings.horizontalSections - 1 && window.grid.height == this.settings.verticalSections
+				|| window.grid.width == this.settings.horizontalSections)
 			{
-				; action: win+up
-				if (horizontalSize > 0)
+				; action: increase width
+				; or state: top edge touching monitor edge and height == max - 1
+				;   action: decrease height
+				; or state: bottom edge touching monitor edge and height == max - 1
+				;   action: increase height
+				if (horizontalSize > 0
+					|| (window.grid.top == 0 && window.grid.height == this.settings.verticalSections - 1 && verticalSize < 0)
+					|| (window.grid.top == 1 && window.grid.height == this.settings.verticalSections - 1 && verticalSize > 0))
 				{
 debug.write("   action: maximize")
 					this.LastOperation := Operation.Maximized
@@ -125,7 +133,7 @@ debug.write("   action: maximize")
 			; state: width == 1
 			if (window.grid.width == 1)
 			{
-				; action: win+down
+				; action: decrease width
 				if (horizontalSize < 0)
 				{
 debug.write("   action: restore unsnapped")
@@ -140,21 +148,34 @@ debug.write("   action: restore unsnapped")
 				; (continue)
 			}
 			
+			; state: height == 1
+			if (window.grid.height == 1)
+			{
+				;    state: top edge touching monitor edge
+				;   action: increase height
+				; or state: bottom edge touching monitor edge
+				;   action: decrease height
+				if ((window.grid.top == 0 && verticalSize > 0) || (window.grid.top == this.settings.verticalSections - 1 && verticalSize < 0))
+				{
+					; (do nothing)
+					return
+				}
+			}
+			
 			; action: all
-debug.write("   action: " (horizontalDirection ? "move" : horizontalSize ? "resize" : "what?"))
+debug.write("   action: " (horizontalDirection ? "move horizontal" : horizontalSize ? "resize horizontal" : verticalDirection ? "move vertical" : verticalSize ? "resize vertical" : "what?"))
 			this.LastOperation := Operation.Moved
 			window.grid.left := window.grid.left + horizontalDirection
-			window.grid.left := window.grid.left + (horizontalSize < 0 && window.grid.left + window.grid.width >= this.settings.horizontalSections ? 1 : 0) ; keep right edge attached to monitor edge if shrinking
-			window.grid.top := 0
+			window.grid.left := window.grid.left + (horizontalSize < 0 && window.grid.left != 0 && window.grid.left + window.grid.width >= this.settings.horizontalSections ? 1 : 0) ; keep right edge attached to monitor edge if shrinking
 			window.grid.width := window.grid.width + horizontalSize
-			window.grid.height := 1
+			window.grid.top := window.grid.top + verticalDirection
 		}
 		
 		; state: restored
 		else if (window.snapped == 0)
 		{
 debug.write("state: restored")
-			; action: win+down
+			; action: decrease width
 			if (horizontalSize < 0)
 			{
 				; state: minimizable
@@ -190,25 +211,73 @@ debug.write("   action: snap")
 ;			window.grid.left := horizontalDirection < 0 ? 0 : horizontalDirection > 0 ? this.settings.horizontalSections - 1 : window.grid.left
 ; Always snap against center edge in direction pushed
 ;			window.grid.left := horizontalDirection < 0 ? this.settings.horizontalSections // 2 - 1 : horizontalDirection > 0 ? (this.settings.horizontalSections + 1) // 2 : window.grid.left
-			window.grid.top := 0
 			window.grid.width := 1 + horizontalSize
-			window.grid.height := 1
+			window.grid.top := 0
+			window.grid.height := this.settings.verticalSections
 			window.restoredpos.left   := (window.position.x - mon.workarea.x) / mon.workarea.w
 			window.restoredpos.top    := (window.position.y - mon.workarea.y) / mon.workarea.h
 			window.restoredpos.width  :=  window.position.w                   / mon.workarea.w
 			window.restoredpos.height :=  window.position.h                   / mon.workarea.h
 		}
 		
+		; Handle vertical snap
+		if (verticalSize)
+		{
+			; state: full vertical height
+			if (window.grid.top == 0 && window.grid.height == this.settings.verticalSections)
+			{
+				if (verticalSize < 0)
+				{
+					window.grid.top := window.grid.top + 1
+				}
+				window.grid.height := window.grid.height - 1
+			}
+			; state: top edge touching monitor edge
+			else if (window.grid.top == 0)
+			{
+				window.grid.height := window.grid.height - verticalSize
+			}
+			; state: bottom edge touching monitor edge
+			else if (window.grid.top + window.grid.height == this.settings.verticalSections)
+			{
+				window.grid.top := window.grid.top - verticalSize
+				window.grid.height := window.grid.height + verticalSize
+			}
+			; state: not touching top or bottom
+			else
+			{
+				if (verticalSize > 0)
+				{
+					window.grid.top := window.grid.top - verticalSize
+					window.grid.height := window.grid.height + verticalSize
+				}
+				else if (verticalSize < 0)
+				{
+					window.grid.height := window.grid.height - verticalSize
+				}
+			}
+		}
+		
 		; Enforce snap boundaries
 		
-		if window.grid.left + window.grid.width > this.settings.horizontalSections
+		if (window.grid.left + window.grid.width > this.settings.horizontalSections)
 		{
 			window.grid.left := window.grid.left - 1
 		}
 		
-		if window.grid.left < 0
+		if (window.grid.left < 0)
 		{
 			window.grid.left := 0
+		}
+		
+		if (window.grid.top + window.grid.height > this.settings.verticalSections)
+		{
+			window.grid.top := window.grid.top - 1
+		}
+		
+		if (window.grid.top < 0)
+		{
+			window.grid.top := 0
 		}
 		
 		; Move/resize snap

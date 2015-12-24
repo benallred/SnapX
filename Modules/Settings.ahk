@@ -52,7 +52,7 @@ class Settings
 				this._verticalSections := value
 				if (!fromIniFile)
 				{
-;					this.writeSetting("verticalSections", "Settings") ; not exposing this value publicly yet
+					this.writeSetting("verticalSections", "Settings")
 				}
 			}
 			return this._verticalSections
@@ -182,7 +182,7 @@ class Settings
 		this.readSetting("verticalSections", "Settings", this._verticalSections)
 		if (this.verticalSections < 1)
 		{
-			this.verticalSections := 1
+			this.verticalSections := 2
 		}
 
 		this.readSetting("runOnStartup", "Settings", this._runOnStartup)

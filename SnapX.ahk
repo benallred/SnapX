@@ -48,10 +48,14 @@ snapper := new Snapper(settings)
 #`::Reload ; for ease of testing during development
 #If
 
-#Left::snapper.moveWindow(-1, 0)
+#Left::snapper.moveWindow(-1, 0, 0, 0)
+#!Left::snapper.moveWindow(-1, 0, 0, 0)
+#Right::snapper.moveWindow(1, 0, 0, 0)
+#!Right::snapper.moveWindow(1, 0, 0, 0)
+#!Up::snapper.moveWindow(0, 0, -1, 0)
+#!Down::snapper.moveWindow(0, 0, 1, 0)
 
-#Right::snapper.moveWindow(1, 0)
-
-#Up::snapper.moveWindow(0, 1)
-
-#Down::snapper.moveWindow(0, -1)
+#Up::snapper.moveWindow(0, 1, 0, 0)
+#Down::snapper.moveWindow(0, -1, 0, 0)
+#PgUp::snapper.moveWindow(0, 0, 0, 1)
+#PgDn::snapper.moveWindow(0, 0, 0, -1)

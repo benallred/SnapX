@@ -1,4 +1,5 @@
 global SettingsGui_HorizontalSections
+global SettingsGui_VerticalSections
 global SettingsGui_RunOnStartup
 global SettingsGui_CheckForUpdates
 
@@ -20,6 +21,10 @@ class SettingsGui
 		Gui, Add, Edit, Number Right w40 Section
 		Gui, Add, UpDown, vSettingsGui_HorizontalSections Range2-20, % this.settings.horizontalSections
 		Gui, Add, Text, x+4 yp+3, % "Horizontal grid size"
+		
+		Gui, Add, Edit, Number Right w40 xs
+		Gui, Add, UpDown, vSettingsGui_VerticalSections Range1-20, % this.settings.verticalSections
+		Gui, Add, Text, x+4 yp+3, % "Vertical grid size"
 		
 		Gui, Add, Checkbox, % "vSettingsGui_RunOnStartup xs" (this.settings.runOnStartup ? " Checked" : ""), % "Start " this.settings.programTitle " on system startup"
 		Gui, Add, Checkbox, % "vSettingsGui_CheckForUpdates" (this.settings.checkForUpdates ? " Checked" : ""), % "Check for updates"
@@ -68,10 +73,12 @@ class SettingsGui
 	onSubmit()
 	{
 		GuiControlGet, horizontalSections, Settings:, SettingsGui_HorizontalSections
+		GuiControlGet, verticalSections, Settings:, SettingsGui_VerticalSections
 		GuiControlGet, runOnStartup, Settings:, SettingsGui_RunOnStartup
 		GuiControlGet, checkForUpdates, Settings:, SettingsGui_CheckForUpdates
 		
 		this.settings.horizontalSections := horizontalSections
+		this.settings.verticalSections := verticalSections
 		this.settings.runOnStartup       := runOnStartup
 		this.settings.checkForUpdates    := checkForUpdates
 		
