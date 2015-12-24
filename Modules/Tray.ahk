@@ -68,7 +68,7 @@ class Tray
 
 	tray_Settings(itemName, itemPos, menuName)
 	{
-		Run, % "notepad.exe " this.settings.iniFile
+		new SettingsGui(this.settings)
 	}
 
 	tray_Reload(itemName, itemPos, menuName)

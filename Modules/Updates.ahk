@@ -59,7 +59,6 @@ debug.write("New version: " newVersion)
 		}
 		
 		this.settings.lastUpdateCheck := A_Now
-		this.settings.WriteSetting("lastUpdateCheck", "Updates")
 		
 		return updateFound
 	}

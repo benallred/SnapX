@@ -73,6 +73,19 @@ SetWindowPlacement(hwnd, ByRef lpwndpl)
 	return result
 }
 
+GetClientRect(hwnd, ByRef lpRect)
+{
+	VarSetCapacity(_lpRect, SizeOf.Long * 4)
+	NumPut(SizeOf.Long * 4, _lpRect)
+	result := DllCall("GetClientRect", Ptr, hwnd, Ptr, &_lpRect)
+	runningOffset := 0
+	lpRect := new _RECT(NumGetInc(_lpRect, runningOffset, "Int")
+							, NumGetInc(_lpRect, runningOffset, "Int")
+							, NumGetInc(_lpRect, runningOffset, "Int")
+							, NumGetInc(_lpRect, runningOffset, "Int"))
+	return result
+}
+
 IndexOf(array, value, itemProperty = "")
 {
 	local i, item
