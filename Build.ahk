@@ -1,1 +1,1 @@
-Build := { version: "1.0.1" }
+Build := { version: "1.1.0" }
