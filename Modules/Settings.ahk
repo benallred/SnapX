@@ -3,6 +3,20 @@ class Settings
 	static programTitle := "SnapX"
 	static programDescription := "Replacement for Windows/Aero Snap"
 	
+	_debug := 0
+	debug[]
+	{
+		get
+		{
+			return this._debug
+		}
+		set
+		{
+			this._debug := value
+			return this._debug
+		}
+	}
+	
 	_horizontalSections := -1
 	horizontalSections[fromIniFile = false]
 	{
@@ -157,7 +171,7 @@ class Settings
 			FileAppend, % ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;`n", % this.iniFile
 		}
 		
-		this.readSetting("debug", "Settings", 0)
+		this.readSetting("debug", "Settings", this._debug)
 		
 		this.readSetting("horizontalSections", "Settings", this._horizontalSections)
 		if (this.horizontalSections < 2)
