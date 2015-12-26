@@ -1,6 +1,8 @@
 class Settings
 {
+	;@Ahk2Exe-SetName SnapX
 	static programTitle := "SnapX"
+	;@Ahk2Exe-SetDescription Replacement for Windows/Aero Snap
 	static programDescription := "Replacement for Windows/Aero Snap"
 	
 	_debug := 0
@@ -81,7 +83,7 @@ class Settings
 				{
 					IfNotExist, % this.startupLinkFile
 					{
-						FileCreateShortcut, % A_ScriptFullPath, % this.startupLinkFile, % A_ScriptDir, , % this.programDescription, % A_IsCompiled ? A_ScriptFullPath : StrReplace(A_ScriptFullPath, ".ahk", ".ico")
+						FileCreateShortcut, % A_ScriptFullPath, % this.startupLinkFile, % A_ScriptDir, , % this.programDescription, % A_IsCompiled ? A_ScriptFullPath : A_ScriptDir "\Resources\" StrReplace(A_ScriptName, ".ahk", ".ico")
 					}
 				}
 				else ; if (this._runOnStartup == 0)

@@ -12,7 +12,11 @@ function BuildRelease([string]$releaseVersion, [int]$architecture)
         New-Item -type directory -path $tmpDir
     }
     
-    & $compilerDir\Ahk2Exe.exe /in SnapX.ahk /out $tmpDir\SnapX.exe /icon SnapX.ico /bin "$compilerDir\Unicode $architecture-bit.bin"
+    # ahk2exe directives used in SnapX.ahk are not currently supported by ahk2exe master branch.
+    # Download latest preview from https://autohotkey.com/boards/viewtopic.php?f=24&t=521,
+	 # rename it with ".Preview<version>", and put it in the AutoHotkey Compiler directory.
+#    & $compilerDir\Ahk2Exe.exe /in SnapX.ahk /out $tmpDir\SnapX.exe /icon Resources\SnapX.ico /bin "$compilerDir\Unicode $architecture-bit.bin"
+    & $compilerDir\Ahk2Exe.Preview2a.exe /in SnapX.ahk /out $tmpDir\SnapX.exe /bin "$compilerDir\Unicode $architecture-bit.bin"
     
     Start-Sleep -s 5 # just waiting for the .exe to appear (like the .zip file below) is a little premature because there is also a temporary file there with it for a little longer
     
@@ -37,6 +41,7 @@ if (Test-Path $buildInfoFilePath)
 }
 
 Add-Content -Path $buildInfoFilePath -Value "Build := { version: `"$releaseVersion`" }"
+Add-Content -Path $buildInfoFilePath -Value ";@Ahk2Exe-SetVersion $releaseVersion"
 
 BuildRelease $releaseVersion 64
 BuildRelease $releaseVersion 32

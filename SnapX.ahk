@@ -4,6 +4,16 @@
 SendMode Input  ; Recommended for new scripts due to its superior speed and reliability.
 SetWorkingDir %A_ScriptDir%  ; Ensures a consistent starting directory.
 
+; ahk2exe directives (http://fincs.ahk4.net/Ahk2ExeDirectives.htm)
+
+;@Ahk2Exe-SetMainIcon Resources\SnapX.ico
+;@Ahk2Exe-SetCopyright Copyright © Ben Allred
+;@Ahk2Exe-SetCompanyName Ben Allred
+;@Ahk2Exe-SetOrigFilename SnapX.exe
+; @ Ahk2Exe-SetName			; this is set in Settings.ahk
+; @ Ahk2Exe-SetDescription	; this is set in Settings.ahk
+; @ Ahk2Exe-SetVersion		; this is set in Build.ahk
+
 ; Third-party libraries
 
 #Include Include\WinGetPosEx.ahk
