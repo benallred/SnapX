@@ -12,11 +12,15 @@ function BuildRelease([string]$releaseVersion, [int]$architecture)
         New-Item -type directory -path $tmpDir
     }
     
-    # ahk2exe directives used in SnapX.ahk are not currently supported by ahk2exe master branch.
-    # Download latest preview from https://autohotkey.com/boards/viewtopic.php?f=24&t=521,
-	 # rename it with ".Preview<version>", and put it in the AutoHotkey Compiler directory.
 #    & $compilerDir\Ahk2Exe.exe /in SnapX.ahk /out $tmpDir\SnapX.exe /icon Resources\SnapX.ico /bin "$compilerDir\Unicode $architecture-bit.bin"
-    & $compilerDir\Ahk2Exe.Preview2a.exe /in SnapX.ahk /out $tmpDir\SnapX.exe /bin "$compilerDir\Unicode $architecture-bit.bin"
+#    # ahk2exe directives used in SnapX.ahk are not currently supported by ahk2exe master branch.
+#    # Download latest preview from https://autohotkey.com/boards/viewtopic.php?f=24&t=521,
+#    # rename it with ".Preview<version>", and put it in the AutoHotkey Compiler directory.
+#    & $compilerDir\Ahk2Exe.Preview2a.exe /in SnapX.ahk /out $tmpDir\SnapX.exe /bin "$compilerDir\Unicode $architecture-bit.bin"
+    # In addition to the comment above, I have also added .ico resource support to my own fork of Ahk2Exe.
+    # Until a new preview is released that supports .ico resources (either via my pull request or another
+    # way (eg, an AHK expert doing it better)), clone and reference my fork.
+    & "..\Ahk2Exe\benallred\Ahk2Exe.ahk" /in SnapX.ahk /out $tmpDir\SnapX.exe /bin "$compilerDir\Unicode $architecture-bit.bin"
     
     Start-Sleep -s 5 # just waiting for the .exe to appear (like the .zip file below) is a little premature because there is also a temporary file there with it for a little longer
     

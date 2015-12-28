@@ -14,6 +14,14 @@ SetWorkingDir %A_ScriptDir%  ; Ensures a consistent starting directory.
 ; @ Ahk2Exe-SetDescription	; this is set in Settings.ahk
 ; @ Ahk2Exe-SetVersion		; this is set in Build.ahk
 
+;@Ahk2Exe-AddResource Resources\About.ico
+;@Ahk2Exe-AddResource Resources\Update.ico
+;@Ahk2Exe-AddResource Resources\Settings.ico
+;@Ahk2Exe-AddResource Resources\Reload.ico
+;@Ahk2Exe-AddResource Resources\Suspend.ico
+;@Ahk2Exe-AddResource Resources\Resume.ico
+;@Ahk2Exe-AddResource Resources\Exit.ico
+
 ; Third-party libraries
 
 #Include Include\WinGetPosEx.ahk

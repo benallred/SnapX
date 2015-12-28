@@ -2,7 +2,14 @@ class Tray
 {
 	initIcon()
 	{
-		Menu, Tray, Icon, shell32.dll, 160 ; other options: 16, 253, 255, 306
+		if (A_IsCompiled)
+		{
+			Menu, Tray, Icon, % A_ScriptName, 1
+		}
+		else
+		{
+			Menu, Tray, Icon, Resources\SnapX.ico
+		}
 		Menu, Tray, NoStandard
 	}
 
@@ -16,33 +23,47 @@ class Tray
 
 		aboutMethod := ObjBindMethod(this, "tray_About")
 		Menu, Tray, Add, % this.settings.programTitle, % aboutMethod
-		Menu, Tray, Icon, % this.settings.programTitle, shell32.dll, 160
 
 		Menu, Tray, Add, &About, % aboutMethod
-		Menu, Tray, Icon, &About, shell32.dll, 222 ; other options: 155, 176, 211, 222, 225, 278
 
 		updateMethod := ObjBindMethod(this, "tray_Update")
 		Menu, Tray, Add, Chec&k for update, % updateMethod
-		Menu, Tray, Icon, Chec&k for update, shell32.dll, 47 ; other options: 47, 123
 
 		Menu, Tray, Add
 
 		settingsMethod := ObjBindMethod(this, "tray_Settings")
 		Menu, Tray, Add, &Settings, % settingsMethod
-		Menu, Tray, Icon, &Settings, shell32.dll, 316
 
 		reloadMethod := ObjBindMethod(this, "tray_Reload")
 		Menu, Tray, Add, &Reload, % reloadMethod
-		Menu, Tray, Icon, &Reload, shell32.dll, 239
 
 		suspendMethod := ObjBindMethod(this, "tray_Suspend")
 		Menu, Tray, Add, S&uspend, % suspendMethod
-		Menu, Tray, Icon, S&uspend, shell32.dll, 145 ; other options: 238, 220
 
 		exitMethod := ObjBindMethod(this, "tray_Exit")
 		Menu, Tray, Add, E&xit, % exitMethod
-		Menu, Tray, Icon, E&xit, shell32.dll, 132
 		
+		if (A_IsCompiled)
+		{
+			Menu, Tray, Icon, % this.settings.programTitle, % A_ScriptName, 1
+			Menu, Tray, Icon, &About, % A_ScriptName, 6
+			Menu, Tray, Icon, Chec&k for update, % A_ScriptName, 7
+			Menu, Tray, Icon, &Settings, % A_ScriptName, 8
+			Menu, Tray, Icon, &Reload, % A_ScriptName, 9
+			Menu, Tray, Icon, S&uspend, % A_ScriptName, 10
+			Menu, Tray, Icon, E&xit, % A_ScriptName, 12
+		}
+		else
+		{
+			Menu, Tray, Icon, % this.settings.programTitle, Resources\SnapX.ico
+			Menu, Tray, Icon, &About, Resources\About.ico
+			Menu, Tray, Icon, Chec&k for update, Resources\Update.ico
+			Menu, Tray, Icon, &Settings, Resources\Settings.ico
+			Menu, Tray, Icon, &Reload, Resources\Reload.ico
+			Menu, Tray, Icon, S&uspend, Resources\Suspend.ico
+			Menu, Tray, Icon, E&xit, Resources\Exit.ico
+		}
+	
 		Menu, Tray, Default, % this.settings.programTitle
 		Menu, Tray, Tip, % this.settings.programTitle
 	}
@@ -81,12 +102,26 @@ class Tray
 		if (A_IsSuspended)
 		{
 			Menu, Tray, Rename, Res&ume, S&uspend
-			Menu, Tray, Icon, S&uspend, shell32.dll, 145
+			if (A_IsCompiled)
+			{
+				Menu, Tray, Icon, S&uspend, % A_ScriptName, 10
+			}
+			else
+			{
+				Menu, Tray, Icon, S&uspend, Resources\Suspend.ico
+			}
 		}
 		else
 		{
 			Menu, Tray, Rename, S&uspend, Res&ume
-			Menu, Tray, Icon, Res&ume, shell32.dll, 302
+			if (A_IsCompiled)
+			{
+				Menu, Tray, Icon, Res&ume, % A_ScriptName, 11
+			}
+			else
+			{
+				Menu, Tray, Icon, Res&ume, Resources\Resume.ico
+			}
 		}
 		
 		Suspend, Toggle
