@@ -212,8 +212,8 @@ debug.write("   action: snap")
 ; Always snap against center edge in direction pushed
 ;			window.grid.left := horizontalDirection < 0 ? this.settings.horizontalSections // 2 - 1 : horizontalDirection > 0 ? (this.settings.horizontalSections + 1) // 2 : window.grid.left
 			window.grid.width := 1 + horizontalSize
-			window.grid.top := 0
-			window.grid.height := this.settings.verticalSections
+			window.grid.top := verticalDirection ? Floor(((verticalDirection < 0 ? window.position.y : window.position.b) - mon.workarea.y) / mon.workarea.h * this.settings.verticalSections) : 0
+			window.grid.height := verticalDirection ? 1 : this.settings.verticalSections
 			window.restoredpos.left   := (window.position.x - mon.workarea.x) / mon.workarea.w
 			window.restoredpos.top    := (window.position.y - mon.workarea.y) / mon.workarea.h
 			window.restoredpos.width  :=  window.position.w                   / mon.workarea.w
