@@ -66,6 +66,8 @@ snapper := new Snapper(settings)
 #`::Reload ; for ease of testing during development
 #If
 
+#MaxThreadsBuffer On
+
 #Left::snapper.moveWindow(-1, 0, 0, 0)
 #!Left::snapper.moveWindow(-1, 0, 0, 0)
 #Right::snapper.moveWindow(1, 0, 0, 0)
