@@ -31,6 +31,9 @@ class Tray
 
 		Menu, Tray, Add
 
+		helpMethod := ObjBindMethod(this, "tray_Help")
+		Menu, Tray, Add, &Help, % helpMethod
+
 		settingsMethod := ObjBindMethod(this, "tray_Settings")
 		Menu, Tray, Add, &Settings, % settingsMethod
 
@@ -48,6 +51,7 @@ class Tray
 			Menu, Tray, Icon, % this.settings.programTitle, % A_ScriptName, 1
 			Menu, Tray, Icon, &About, % A_ScriptName, 6
 			Menu, Tray, Icon, Chec&k for update, % A_ScriptName, 7
+			Menu, Tray, Icon, &Help, % A_ScriptName, 13
 			Menu, Tray, Icon, &Settings, % A_ScriptName, 8
 			Menu, Tray, Icon, &Reload, % A_ScriptName, 9
 			Menu, Tray, Icon, S&uspend, % A_ScriptName, 10
@@ -58,6 +62,7 @@ class Tray
 			Menu, Tray, Icon, % this.settings.programTitle, Resources\SnapX.ico
 			Menu, Tray, Icon, &About, Resources\About.ico
 			Menu, Tray, Icon, Chec&k for update, Resources\Update.ico
+			Menu, Tray, Icon, &Help, Resources\Help.ico
 			Menu, Tray, Icon, &Settings, Resources\Settings.ico
 			Menu, Tray, Icon, &Reload, Resources\Reload.ico
 			Menu, Tray, Icon, S&uspend, Resources\Suspend.ico
@@ -75,6 +80,11 @@ class Tray
 	tray_About(itemName, itemPos, menuName)
 	{
 		new AboutGui(this.settings, this.build)
+	}
+
+	tray_Help(itemName, itemPos, menuName)
+	{
+		new HelpGui(this.settings)
 	}
 
 	tray_Update(itemName, itemPos, menuName)

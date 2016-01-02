@@ -210,6 +210,7 @@ class Settings
 		if (firstRun)
 		{
 			MsgBox, , % "Thank you for using " this.programTitle, % "This is your first time running " this.programTitle ", by Ben Allred.`n`nYou are running with the recommended default settings.`nYou can change your settings via the Settings option in the tray menu."
+			new HelpGui(this)
 		}
 	}
 	

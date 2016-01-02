@@ -6,6 +6,7 @@ SetWorkingDir %A_ScriptDir%  ; Ensures a consistent starting directory.
 
 ; ahk2exe directives (http://fincs.ahk4.net/Ahk2ExeDirectives.htm)
 
+; icon 1
 ;@Ahk2Exe-SetMainIcon Resources\SnapX.ico
 ;@Ahk2Exe-SetCopyright Copyright © Ben Allred
 ;@Ahk2Exe-SetCompanyName Ben Allred
@@ -14,13 +15,24 @@ SetWorkingDir %A_ScriptDir%  ; Ensures a consistent starting directory.
 ; @ Ahk2Exe-SetDescription	; this is set in Settings.ahk
 ; @ Ahk2Exe-SetVersion		; this is set in Build.ahk
 
+; icon 6
 ;@Ahk2Exe-AddResource Resources\About.ico
+; icon 7
 ;@Ahk2Exe-AddResource Resources\Update.ico
+; icon 8
 ;@Ahk2Exe-AddResource Resources\Settings.ico
+; icon 9
 ;@Ahk2Exe-AddResource Resources\Reload.ico
+; icon 10
 ;@Ahk2Exe-AddResource Resources\Suspend.ico
+; icon 11
 ;@Ahk2Exe-AddResource Resources\Resume.ico
+; icon 12
 ;@Ahk2Exe-AddResource Resources\Exit.ico
+; icon 13
+;@Ahk2Exe-AddResource Resources\Help.ico
+; icon 14
+;@Ahk2Exe-AddResource Resources\Windows.ico
 
 ; Third-party libraries
 
@@ -38,6 +50,7 @@ SetWorkingDir %A_ScriptDir%  ; Ensures a consistent starting directory.
 #Include Modules\Snapper.ahk
 #Include Modules\AboutGui.ahk
 #Include Modules\SettingsGui.ahk
+#Include Modules\HelpGui.ahk
 
 #Include Build.ahk
 
