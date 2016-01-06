@@ -11,20 +11,20 @@ class Operation
 
 class SizePosition
 {
-	__New(x, y, w=0, h=0, r=0, b=0, xo=0, yo=0)
+	__New(x="?", y="?", w="?", h="?", r="?", b="?", xo="?", yo="?")
 	{
-		this.x := x
-		this.l := x
-		this.y := y
-		this.t := y
-		this.w := w ? w : r ? r - x : 0
-		this.h := h ? h : b ? b - y : 0
-		this.r := r ? r : w ? x + w : 0
-		this.b := b ? b : h ? y + h : 0
-		this.cx := x && w ? x + w / 2 : 0
-		this.cy := y && h ? y + h / 2 : 0
-		this.xo := xo
-		this.yo := yo
+		this.x := x != "?" ? x : 0
+		this.l := x != "?" ? x : 0
+		this.y := y != "?" ? y : 0
+		this.t := y != "?" ? y : 0
+		this.w := w != "?" ? w : r != "?" ? r - x : 0
+		this.h := h != "?" ? h : b != "?" ? b - y : 0
+		this.r := r != "?" ? r : w != "?" ? x + w : 0
+		this.b := b != "?" ? b : h != "?" ? y + h : 0
+		this.cx := x != "?" && this.w ? x + this.w / 2 : 0
+		this.cy := y != "?" && this.h ? y + this.h / 2 : 0
+		this.xo := xo != "?" ? xo : 0
+		this.yo := yo != "?" ? yo : 0
 	}
 }
 
