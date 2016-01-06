@@ -69,6 +69,9 @@
 ;   it.  When DWM is a possibility (i.e. Vista+), a developer-friendly messsage
 ;   will be dumped to the debugger when these errors occur.
 ;
+; * 20160105 (Ben Allred): Adjust width and height for offset calculations if
+;   DPI is in play.
+;
 ; Credit:
 ;
 ;   Idea and some code from *KaFu* (AutoIt forum)
@@ -137,8 +140,32 @@ WinGetPosEx(hWindow,ByRef X="",ByRef Y="",ByRef Width="",ByRef Height="",ByRef O
     GWR_Height:=NumGet(RECT,12,"Int")-NumGet(RECT,4,"Int")
         ;-- Bottom minus Top
 
+    ;-- Adjust width and height for offset calculations if DPI is in play
+    ;   See https://msdn.microsoft.com/en-us/library/windows/desktop/dn280512(v=vs.85).aspx
+    ;   The current version of AutoHotkey is PROCESS_SYSTEM_DPI_AWARE (contains "<dpiAware>true</dpiAware>" in its manifest)
+    ;   DwmGetWindowAttribute returns DPI scaled sizes
+    ;   GetWindowRect does not
+    ; get monitor handle where the window is at so we can get the monitor name
+    hMonitor := DllCall("MonitorFromRect",PtrType,&RECT,UInt,2) ; MONITOR_DEFAULTTONEAREST = 2 (Returns a handle to the display monitor that is nearest to the rectangle)
+    ; get monitor name so we can get a handle to the monitor device context
+    VarSetCapacity(MONITORINFOEX,104)
+    NumPut(104,MONITORINFOEX)
+    DllCall("GetMonitorInfo",PtrType,hMonitor,PtrType,&MONITORINFOEX)
+    monitorName := StrGet(&MONITORINFOEX+40)
+    ; get handle to monitor device context so we can get the dpi adjusted and actual screen sizes
+    hdc := DllCall("CreateDC",Str,monitorName,PtrType,0,PtrType,0,PtrType,0)
+    ; get dpi adjusted and actual screen sizes
+    dpiAdjustedScreenHeight := DllCall("GetDeviceCaps",PtrType,hdc,Int,10) ; VERTRES = 10 (Height, in raster lines, of the screen)
+    actualScreenHeight := DllCall("GetDeviceCaps",PtrType,hdc,Int,117) ; DESKTOPVERTRES = 117
+    ; delete hdc as instructed
+    DllCall("DeleteDC",PtrType,hdc)
+    ; calculate dpi adjusted width and height
+    dpiFactor := actualScreenHeight/dpiAdjustedScreenHeight ; this will be 1.0 if DPI is 100%
+    dpiAdjusted_Width := Ceil(Width/dpiFactor)
+    dpiAdjusted_Height := Ceil(Height/dpiFactor)
+
     ;-- Calculate offsets and update output variables
-    NumPut(Offset_X:=(Width-GWR_Width)//2,RECTPlus,16,"Int")
-    NumPut(Offset_Y:=(Height-GWR_Height)//2,RECTPlus,20,"Int")
+    NumPut(Offset_X:=(dpiAdjusted_Width-GWR_Width)//2,RECTPlus,16,"Int")
+    NumPut(Offset_Y:=(dpiAdjusted_Height-GWR_Height)//2,RECTPlus,20,"Int")
     Return &RECTPlus
     }
