@@ -78,7 +78,7 @@ class SettingsGui
 		GuiControlGet, checkForUpdates, Settings:, SettingsGui_CheckForUpdates
 		
 		this.settings.horizontalSections := horizontalSections
-		this.settings.verticalSections := verticalSections
+		this.settings.verticalSections   := verticalSections
 		this.settings.runOnStartup       := runOnStartup
 		this.settings.checkForUpdates    := checkForUpdates
 		

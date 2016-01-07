@@ -83,14 +83,27 @@ snapper := new Snapper(settings)
 
 #MaxThreadsBuffer On
 
-#Left::snapper.moveWindow(-1, 0, 0, 0)
-#!Left::snapper.moveWindow(-1, 0, 0, 0)
-#Right::snapper.moveWindow(1, 0, 0, 0)
-#!Right::snapper.moveWindow(1, 0, 0, 0)
-#!Up::snapper.moveWindow(0, 0, -1, 0)
-#!Down::snapper.moveWindow(0, 0, 1, 0)
+; horizontal sizing and direction
+#Left::snapper.moveWindow(-1, 0, 0, 0)  ; move left
+#!Left::snapper.moveWindow(-1, 0, 0, 0) ; move left
+#Right::snapper.moveWindow(1, 0, 0, 0)  ; move right
+#!Right::snapper.moveWindow(1, 0, 0, 0) ; move right
+#Up::snapper.moveWindow(0, 1, 0, 0)     ; increase width
+#Down::snapper.moveWindow(0, -1, 0, 0)  ; decrease width
 
-#Up::snapper.moveWindow(0, 1, 0, 0)
-#Down::snapper.moveWindow(0, -1, 0, 0)
-#PgUp::snapper.moveWindow(0, 0, 0, 1)
-#PgDn::snapper.moveWindow(0, 0, 0, -1)
+; vertical sizing and direction
+#!Up::snapper.moveWindow(0, 0, -1, 0)   ; move up
+#!Down::snapper.moveWindow(0, 0, 1, 0)  ; move down
+#PgUp::snapper.moveWindow(0, 0, 0, 1)   ; size height toward top
+#PgDn::snapper.moveWindow(0, 0, 0, -1)  ; size height toward bottom
+
+; movement between multiple monitors
+; 	sleep allows time for Windows to do the movement to the new monitor before we re-snap according to the new monitor's width/height
+~#+Left::
+	Sleep, 10
+	snapper.moveWindow(0, 0, 0, 0)
+	return
+~#+Right::
+	Sleep, 10
+	snapper.moveWindow(0, 0, 0, 0)
+	return

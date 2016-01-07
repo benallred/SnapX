@@ -73,6 +73,20 @@ debug.write("   action: minimize")
 		widthFactor  := mon.workarea.w / this.settings.horizontalSections
 		heightFactor := mon.workarea.h / this.settings.verticalSections
 		
+		; state: restored
+		if (!window.snapped)
+		{
+			; action: nothing
+			if (!(horizontalDirection || horizontalSize || verticalDirection || verticalSize))
+			{
+				return
+			}
+			; action: anything
+			; or state: snapped
+			;   action: nothing (need to resnap for some reason)
+			; (continue)
+		}
+		
 		; state: minimized
 		if (minMaxState < 0)
 		{
@@ -163,7 +177,7 @@ debug.write("   action: restore unsnapped")
 			}
 			
 			; action: all
-debug.write("   action: " (horizontalDirection ? "move horizontal" : horizontalSize ? "resize horizontal" : verticalDirection ? "move vertical" : verticalSize ? "resize vertical" : "what?"))
+debug.write("   action: " (horizontalDirection ? "move horizontal" : horizontalSize ? "resize horizontal" : verticalDirection ? "move vertical" : verticalSize ? "resize vertical" : "snap"))
 			this.LastOperation := Operation.Moved
 			window.grid.left := window.grid.left + horizontalDirection
 			window.grid.left := window.grid.left + (horizontalSize < 0 && window.grid.left != 0 && window.grid.left + window.grid.width >= this.settings.horizontalSections ? 1 : 0) ; keep right edge attached to monitor edge if shrinking
