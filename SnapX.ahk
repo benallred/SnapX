@@ -15,6 +15,8 @@ SetWorkingDir %A_ScriptDir%  ; Ensures a consistent starting directory.
 ; @ Ahk2Exe-SetDescription	; this is set in Settings.ahk
 ; @ Ahk2Exe-SetVersion		; this is set in Build.ahk
 
+; icon 4
+;@Ahk2Exe-AddResource Resources\SnapX_Suspended.ico, 206
 ; icon 6
 ;@Ahk2Exe-AddResource Resources\About.ico
 ; icon 7

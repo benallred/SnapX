@@ -109,7 +109,23 @@ class Tray
 
 	tray_Suspend(itemName, itemPos, menuName)
 	{
+		Suspend, Toggle
+		
 		if (A_IsSuspended)
+		{
+			Menu, Tray, Rename, S&uspend, Res&ume
+			if (A_IsCompiled)
+			{
+				Menu, Tray, Icon, Res&ume, % A_ScriptName, 11
+				; SnapX_Suspended.ico is embedded in the exe in place of the default suspended icon
+			}
+			else
+			{
+				Menu, Tray, Icon, Res&ume, Resources\Resume.ico
+				Menu, Tray, Icon, Resources\SnapX_Suspended.ico, , 1
+			}
+		}
+		else
 		{
 			Menu, Tray, Rename, Res&ume, S&uspend
 			if (A_IsCompiled)
@@ -119,22 +135,9 @@ class Tray
 			else
 			{
 				Menu, Tray, Icon, S&uspend, Resources\Suspend.ico
+				Menu, Tray, Icon, Resources\SnapX.ico, , 0
 			}
 		}
-		else
-		{
-			Menu, Tray, Rename, S&uspend, Res&ume
-			if (A_IsCompiled)
-			{
-				Menu, Tray, Icon, Res&ume, % A_ScriptName, 11
-			}
-			else
-			{
-				Menu, Tray, Icon, Res&ume, Resources\Resume.ico
-			}
-		}
-		
-		Suspend, Toggle
 	}
 
 	tray_Exit(itemName, itemPos, menuName)
