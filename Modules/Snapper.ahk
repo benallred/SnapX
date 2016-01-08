@@ -183,6 +183,30 @@ debug.write("   action: " (horizontalDirection ? "move horizontal" : horizontalS
 			window.grid.left := window.grid.left + (horizontalSize < 0 && window.grid.left != 0 && window.grid.left + window.grid.width >= this.settings.horizontalSections ? 1 : 0) ; keep right edge attached to monitor edge if shrinking
 			window.grid.width := window.grid.width + horizontalSize
 			window.grid.top := window.grid.top + verticalDirection
+			
+			; Allow wrapping horizontal movement
+			
+			;  state: left side off screen
+			; action: move left
+			if (horizontalDirection < 0 && window.grid.left < 0)
+			{
+debug.write("      wrap")
+				window.grid.left := this.settings.horizontalSections - window.grid.width
+				Send, #+{Left}
+				this.moveWindow(0, 0, 0, 0)
+				return
+			}
+			
+			;  state: right side off screen
+			; action: move right
+			if (horizontalDirection > 0 && window.grid.left + window.grid.width > this.settings.horizontalSections)
+			{
+debug.write("      wrap")
+				window.grid.left := 0
+				Send, #+{Right}
+				this.moveWindow(0, 0, 0, 0)
+				return
+			}
 		}
 		
 		; state: restored
