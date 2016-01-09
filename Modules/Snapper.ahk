@@ -113,6 +113,20 @@ debug.write("   action: restore snapped")
 				this.LastOperation := Operation.RestoredSnapped
 				WinRestore, A
 			}
+			; action: horizontal move
+			else if (horizontalDirection)
+			{
+debug.write("   action: move horizontal wrap")
+				this.LastOperation := Operation.Moved
+				if (horizontalDirection < 0)
+				{
+					Send, #+{Left}
+				}
+				else
+				{
+					Send, #+{Right}
+				}
+			}
 			; action: anything else
 			return
 		}
