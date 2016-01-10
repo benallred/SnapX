@@ -79,6 +79,7 @@ snapper := new Snapper(settings)
 
 #If settings.debug
 #`::Reload ; for ease of testing during development
+#~::Run, powershell ; opens PowerShell (for Posh-Git) in the current working directory
 #If
 
 #MaxThreadsBuffer On
