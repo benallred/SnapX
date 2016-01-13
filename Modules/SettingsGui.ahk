@@ -5,9 +5,10 @@ global SettingsGui_CheckForUpdates
 
 class SettingsGui
 {
-	__New(settings)
+	__New(settings, snapper)
 	{
 		this.settings := settings
+		this.snapper := snapper
 		
 		Gui, Settings:New, -MaximizeBox
 		
@@ -77,12 +78,20 @@ class SettingsGui
 		GuiControlGet, runOnStartup, Settings:, SettingsGui_RunOnStartup
 		GuiControlGet, checkForUpdates, Settings:, SettingsGui_CheckForUpdates
 		
+		oldHorizontalSections := this.settings.horizontalSections
+		oldVerticalSections := this.settings.verticalSections
+		
 		this.settings.horizontalSections := horizontalSections
 		this.settings.verticalSections   := verticalSections
 		this.settings.runOnStartup       := runOnStartup
 		this.settings.checkForUpdates    := checkForUpdates
 		
 		Gui, Settings:Destroy
+		
+		if (horizontalSections != oldHorizontalSections || verticalSections != oldVerticalSections)
+		{
+			this.snapper.updateGrid(oldHorizontalSections, oldVerticalSections)
+		}
 	}
 }
 

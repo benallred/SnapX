@@ -98,3 +98,8 @@ IndexOf(array, value, itemProperty = "")
 	}
 	return 0
 }
+
+Max(a, b)
+{
+	return a > b ? a : b
+}

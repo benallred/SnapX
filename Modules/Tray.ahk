@@ -13,11 +13,12 @@ class Tray
 		Menu, Tray, NoStandard
 	}
 
-	__New(settings, build, updateChecker)
+	__New(settings, build, updateChecker, snapper)
 	{
 		this.settings := settings
 		this.build := build
 		this.updateChecker := updateChecker
+		this.snapper := snapper
 
 		this.InitIcon()
 
@@ -99,7 +100,7 @@ class Tray
 
 	tray_Settings(itemName, itemPos, menuName)
 	{
-		new SettingsGui(this.settings)
+		new SettingsGui(this.settings, this.snapper)
 	}
 
 	tray_Reload(itemName, itemPos, menuName)
