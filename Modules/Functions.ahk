@@ -86,6 +86,35 @@ GetClientRect(hwnd, ByRef lpRect)
 	return result
 }
 
+SetWinEventHook(eventMin, eventMax, hmodWinEventProc, lpfnWinEventProc, idProcess, idThread, dwflags)
+{
+	return DllCall("SetWinEventHook", UInt, eventMin, UInt, eventMax, UInt, hmodWinEventProc, UInt, lpfnWinEventProc, UInt, idProcess, UInt, idThread, UInt, dwflags)
+}
+
+ThisCallbackTracker := []
+
+RegisterCallbackToThis(FunctionName, ParamCount, your_this)
+{
+	global ThisCallbackTracker
+	index := ThisCallbackTracker.Push({ your_this: &your_this, FunctionName: FunctionName })
+	return RegisterCallback("ThisCallback", "", ParamCount, index)
+}
+
+ThisCallback( param01 = "", param02 = "", param03 = "", param04 = "", param05 = "", param06 = "", param07 = "", param08 = ""
+				, param09 = "", param10 = "", param11 = "", param12 = "", param13 = "", param14 = "", param15 = "", param16 = ""
+				, param17 = "", param18 = "", param19 = "", param20 = "", param21 = "", param22 = "", param23 = "", param24 = ""
+				, param25 = "", param26 = "", param27 = "", param28 = "", param29 = "", param30 = "", param31 = "")
+{
+	global ThisCallbackTracker
+	this_info := ThisCallbackTracker[A_EventInfo]
+;debug.write("ThisCallback: " A_EventInfo " " this_info.your_this " " this_info.FunctionName)
+;debug.write("      params: " param01 " " param02 " " param03 " " param04 " " param05 " " param06 " " param07 " " param08 " "param09 " " param10 " " param11 " " param12 " " param13 " " param14 " " param15 " " param16 " " param17 " " param18 " " param19 " " param20 " " param21 " " param22 " " param23 " " param24 " " param25 " " param26 " " param27 " " param28 " " param29 " " param30 " " param31)
+	Object(this_info.your_this)[this_info.FunctionName]( param01, param02, param03, param04, param05, param06, param07, param08
+																		, param09, param10, param11, param12, param13, param14, param15, param16
+																		, param17, param18, param19, param20, param21, param22, param23, param24
+																		, param25, param26, param27, param28, param29, param30, param31)
+}
+
 IndexOf(array, value, itemProperty = "")
 {
 	local i, item
@@ -102,4 +131,15 @@ IndexOf(array, value, itemProperty = "")
 Max(a, b)
 {
 	return a > b ? a : b
+}
+
+Join(separator, items*)
+{
+	local i, item, joined
+	joined := ""
+	for i, item in items
+	{
+		joined := joined item separator
+	}
+	return SubStr(joined, 1, -1 * StrLen(separator))
 }

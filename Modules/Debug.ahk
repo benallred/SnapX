@@ -18,11 +18,11 @@ class Debug
 		}
 	}
 
-	write(text)
+	write(items*)
 	{
 		if (this.settings.debug)
 		{
-			lastRow := LV_Add("", , text)
+			lastRow := LV_Add("", , Join(" ", items*))
 			LV_Modify(lastRow, "Vis", lastRow)
 			LV_ModifyCol(1, "Auto")
 		}

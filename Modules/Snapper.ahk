@@ -11,6 +11,12 @@ class Snapper
 		
 		onExitMethod := ObjBindMethod(this, "exitFunc")
 		OnExit(onExitMethod)
+		
+		hWinEventHook := SetWinEventHook(EVENT.SYSTEM.MOVESIZESTART, EVENT.SYSTEM.MOVESIZESTART, 0, RegisterCallbackToThis("WinEventProc", 7, this), 0, 0, WINEVENT.SKIPOWNPROCESS)
+		; No need to call UnhookWinEvent
+		; 	If the client's thread ends, the system automatically calls this function.
+		; 	(https://msdn.microsoft.com/en-us/library/windows/desktop/dd373671(v=vs.85).aspx)
+debug.write("Attached WinEventHook " hWinEventHook)
 	}
 	
 	moveWindow(hwnd, horizontalDirection, horizontalSize, verticalDirection, verticalSize)
@@ -114,7 +120,7 @@ debug.write("state: maximized")
 			{
 debug.write("   action: restore snapped")
 				this.LastOperation := Operation.RestoredSnapped
-				window.snapped := 1
+				this.setSnapped(window, mon)
 				if (horizontalSize < 0)
 				{
 					window.grid.left := window.grid.left && window.grid.left + window.grid.width == this.settings.horizontalSections ? 1 : 0 ; if window was right-aligned before maximizing
@@ -259,12 +265,10 @@ debug.write("   action: minimize")
 				return
 			}
 			
-			window.UpdatePosition()
-			
 			; action: anything else
 debug.write("   action: snap")
 			this.LastOperation := Operation.Snapped
-			window.snapped := 1
+			this.setSnapped(window, mon)
 ; Snap based on left/right edges and left/right direction pushed
 			window.grid.left := Floor(((horizontalDirection < 0 ? window.position.x : horizontalDirection > 0 ? window.position.r : window.position.cx) - mon.workarea.x) / mon.workarea.w * this.settings.horizontalSections)
 ; Original - Snap based on center coordinates
@@ -286,10 +290,6 @@ debug.write("   action: snap")
 			window.grid.width := 1 + horizontalSize
 			window.grid.top := verticalDirection ? Floor(((verticalDirection < 0 ? window.position.y : window.position.b) - mon.workarea.y) / mon.workarea.h * this.settings.verticalSections) : 0
 			window.grid.height := verticalDirection ? 1 : this.settings.verticalSections
-			window.restoredpos.left   := (window.position.x - mon.workarea.x) / mon.workarea.w
-			window.restoredpos.top    := (window.position.y - mon.workarea.y) / mon.workarea.h
-			window.restoredpos.width  :=  window.position.w                   / mon.workarea.w
-			window.restoredpos.height :=  window.position.h                   / mon.workarea.h
 		}
 		
 		; Handle vertical snap
@@ -325,6 +325,17 @@ debug.write("   action: snap")
 		; Move/resize snap
 		newSizePosition := this.gridToSizePosition(window, mon, widthFactor, heightFactor)
 		WinMove, % "ahk_id " window.handle, , newSizePosition.x, newSizePosition.y, newSizePosition.w, newSizePosition.h
+	}
+	
+	setSnapped(window, mon)
+	{
+		window.updatePosition()
+		window.snapped := 1
+		window.restoredpos.left   := (window.position.x - mon.workarea.x) / mon.workarea.w
+		window.restoredpos.top    := (window.position.y - mon.workarea.y) / mon.workarea.h
+		window.restoredpos.width  :=  window.position.w                   / mon.workarea.w
+		window.restoredpos.height :=  window.position.h                   / mon.workarea.h
+debug.write("restoredpos: " window.restoredpos.left " " window.restoredpos.top " " window.restoredpos.width " " window.restoredpos.height)
 	}
 	
 	gridToSizePosition(window, mon, widthFactor, heightFactor)
@@ -386,6 +397,53 @@ debug.write("   action: snap")
 			if (!ErrorLevel)
 			{
 				this.StillHoldingWinKey := 0
+			}
+		}
+	}
+	
+	WinEventProc(hWinEventHook, event, hwnd, idObject, idChild, dwEventThread, dwmsEventTime)
+	{
+debug.write("WinEventProc: " event " " hwnd " " idObject " " idChild)
+		if (hwnd)
+		{
+			index := IndexOf(this.TrackedWindows, hwnd, "handle")
+			; state: tracked
+			if (index > 0)
+			{
+				window := this.TrackedWindows[index]
+				this.LastWindowHandle := window.handle
+				
+				GetKeyState, leftMouseButtonState, LButton
+				
+				; state: snapped and left mouse button down (vs moving with arrow keys)
+				if (window.snapped && leftMouseButtonState == "D")
+				{
+debug.write("state: snapped")
+					BlockInput, MouseMove ; user can move mouse faster than we can move window, so clicking later may miss the title bar
+					SetWinDelay, 0
+					SetMouseDelay, 0
+					window.snapped := 0
+					Click, up ; can't move (resize) window ourselves until the system thinks the user is done
+					
+					CoordMode, Mouse, Window
+					MouseGetPos, mouseRelPosX, mouseRelPosY
+					CoordMode, Mouse, Screen
+					MouseGetPos, mouseAbsPosX, mouseAbsPosY
+					WinGetPos, , , currentWidth, , % "ahk_id " window.handle
+					
+					monitorId := GetMonitorId(window.handle)
+					mon := new SnapMonitor(monitorId)
+					
+debug.write("   action: drag restore")
+					; "restore" width and height from snapped state, set left and top relative to where title bar was grabbed
+					WinMove, % "ahk_id " window.handle, , mouseAbsPosX - (mouseRelPosX / currentWidth) * (window.restoredpos.width * mon.workarea.w)
+																	, mouseAbsPosY - mouseRelPosY
+																	, window.restoredpos.width  * mon.workarea.w
+																	, window.restoredpos.height * mon.workarea.h
+					
+					Click, down ; grab title bar
+					BlockInput, MouseMoveOff
+				}
 			}
 		}
 	}

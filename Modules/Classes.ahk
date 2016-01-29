@@ -1,14 +1,3 @@
-class Operation
-{
-	static None            := 0
-	static Minimized       := 1
-	static Restored        := 2
-	static Snapped         := 3
-	static Moved           := 4
-	static RestoredSnapped := 5
-	static Maximized       := 6
-}
-
 class SizePosition
 {
 	__New(x="?", y="?", w="?", h="?", r="?", b="?", xo="?", yo="?")
@@ -54,23 +43,13 @@ class SnapWindow
 		this.restoredpos := { left:0.0, top:0.0, width:0.0, height:0.0 } ; in percentage of monitor
 	}
 	
-	UpdatePosition()
+	updatePosition()
 	{
-		WinGetPos, winX, winY, winW, winH, % "ahk_id " this.handle
+;		WinGetPos, winX, winY, winW, winH, % "ahk_id " this.handle
+		GetWindowPlacement(this.handle, wp) ; use this instead of WinGetPos in case the window is maximized when this is called
 		WinGetPosEx(this.handle, , , , , xOffset, yOffset)
-		this.position := new SizePosition(winX, winY, winW, winH, , , xOffset, yOffset)
+		this.position := new SizePosition(wp.rcNormalPosition.left, wp.rcNormalPosition.top, , , wp.rcNormalPosition.right, wp.rcNormalPosition.bottom, xOffset, yOffset)
 	}
-}
-
-class SizeOf
-{
-	static UInt         := 32 // 8
-	static Int          := 32 // 8
-	static Long         := SizeOf.Int
-	static Point        := SizeOf.Long * 2
-	static Rect         := SizeOf.Long * 4
-	static Short        := 16 // 8
-	static Variant_Bool := SizeOf.Short
 }
 
 class WINDOWPLACEMENT
@@ -107,4 +86,46 @@ class _RECT
 		this.right := right
 		this.bottom := bottom
 	}
+}
+
+class Operation
+{
+	static None            := 0
+	static Minimized       := 1
+	static Restored        := 2
+	static Snapped         := 3
+	static Moved           := 4
+	static RestoredSnapped := 5
+	static Maximized       := 6
+}
+
+class EVENT
+{
+	static MIN := 0x00000001
+	static MAX := 0x7FFFFFFF
+	
+	class SYSTEM
+	{
+		static MOVESIZESTART := 0x000A
+		static MOVESIZEEND   := 0x000B
+	}
+}
+
+class WINEVENT
+{
+	OUTOFCONTEXT   := 0x0000
+	SKIPOWNTHREAD  := 0x0001
+	SKIPOWNPROCESS := 0x0002
+	INCONTEXT      := 0x0004
+}
+
+class SizeOf
+{
+	static UInt         := 32 // 8
+	static Int          := 32 // 8
+	static Long         := SizeOf.Int
+	static Point        := SizeOf.Long * 2
+	static Rect         := SizeOf.Long * 4
+	static Short        := 16 // 8
+	static Variant_Bool := SizeOf.Short
 }
