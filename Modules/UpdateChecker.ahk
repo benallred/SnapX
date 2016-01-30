@@ -4,12 +4,18 @@ class UpdateChecker
 	{
 		this.settings := settings
 		this.build := build
+debug.start()
+debug.write("Current version: " this.build.version)
+debug.end()
 		
 		if (this.settings.checkForUpdates)
 		{
 			daysSinceLastUpdate := A_Now
 			EnvSub, daysSinceLastUpdate, % this.settings.lastUpdateCheck, Days
-debug.write("Last update check: " this.settings.lastUpdateCheck "; (days:) " daysSinceLastUpdate)
+debug.start()
+debug.write("Last update check: " this.settings.lastUpdateCheck)
+debug.write("Days: " daysSinceLastUpdate)
+debug.end()
 
 			if (daysSinceLastUpdate >= this.settings.checkForUpdates_IntervalDays)
 			{
@@ -20,6 +26,7 @@ debug.write("Last update check: " this.settings.lastUpdateCheck "; (days:) " day
 	
 	checkForUpdates()
 	{
+debug.start()
 		updateFound := false
 		latestRelease := ""
 debug.write("Checking for updates")
@@ -59,6 +66,7 @@ debug.write("New version: " newVersion)
 		}
 		
 		this.settings.lastUpdateCheck := A_Now
+debug.end()
 		
 		return updateFound
 	}

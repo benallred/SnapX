@@ -4,6 +4,7 @@ class Snapper
 	{
 		this.settings := settings
 		
+debug.start()
 		this.TrackedWindows := []
 		this.LastOperation := Operation.None
 		this.LastWindowHandle := -1
@@ -17,30 +18,38 @@ class Snapper
 		; 	If the client's thread ends, the system automatically calls this function.
 		; 	(https://msdn.microsoft.com/en-us/library/windows/desktop/dd373671(v=vs.85).aspx)
 debug.write("Attached WinEventHook " hWinEventHook)
+debug.end()
 	}
 	
 	moveWindow(hwnd, horizontalDirection, horizontalSize, verticalDirection, verticalSize)
 	{
+debug.start()
+debug.write((hwnd ? hwnd : "A") " "
+				. (horizontalDirection > 0 ? "R" : horizontalDirection < 0 ? "L" : "")
+				. (horizontalSize      > 0 ? "W" : horizontalSize      < 0 ? "N" : "")
+				. (verticalDirection   > 0 ? "D" : verticalDirection   < 0 ? "U" : "")
+				. (verticalSize        > 0 ? "T" : verticalSize        < 0 ? "B" : ""))
 		; state: minimized and LWin not released yet
 		if (this.LastOperation == Operation.Minimized && this.StillHoldingWinKey)
 		{
-debug.write("state: minimized")
+debug.write("s:minimized")
 			; action: increase width
 			if (horizontalSize > 0)
 			{
-debug.write("   action: restore")
+debug.write("a:restore")
 				this.StillHoldingWinKey := 0
 				this.LastOperation := Operation.Restored
 				WinRestore, % "ahk_id " this.LastWindowHandle  ; WinRestore followed by WinActivate, with ahk_id specified explicitely on each, was the only way I could get
 				WinActivate, % "ahk_id " this.LastWindowHandle ; Win+Down, Win+Up (particularly when done in quick succession) to restore and set focus again reliably.
 			}
 			; action: anything else
-			return
+			return debug.end()
 		}
 		
 		if (!hwnd)
 		{
 			WinGet, hwnd, ID, A
+debug.write(hwnd + 0)
 		}
 		
 		WinGet, activeWindowStyle, Style, % "ahk_id " hwnd
@@ -54,15 +63,15 @@ debug.write("   action: restore")
 				; action: decrease width
 				if (horizontalSize < 0)
 				{
-debug.write("state: restored")
-debug.write("   action: minimize")
+debug.write("s:restored")
+debug.write("a:minimize")
 					this.LastWindowHandle := hwnd
 					this.minimizeAndKeyWaitLWin()
 				}
 				; action: anything else
 				; (continue)
 			}
-			return
+			return debug.end()
 		}
 
 		index := IndexOf(this.TrackedWindows, hwnd, "handle")
@@ -88,7 +97,9 @@ debug.write("   action: minimize")
 			; action: nothing
 			if (!(horizontalDirection || horizontalSize || verticalDirection || verticalSize))
 			{
-				return
+debug.write("s:restored")
+debug.write("a:nothing")
+				return debug.end()
 			}
 			; action: anything
 			; or state: snapped
@@ -99,26 +110,26 @@ debug.write("   action: minimize")
 		; state: minimized
 		if (minMaxState < 0)
 		{
-debug.write("state: minimized")
+debug.write("s:minimized")
 			; action: increase width
 			if (horizontalSize > 0)
 			{
-debug.write("   action: restore")
+debug.write("a:restore")
 				this.LastOperation := Operation.Restored
 				WinRestore, % "ahk_id " window.handle
 			}
 			; action: anything else
-			return
+			return debug.end()
 		}
 		
 		; state: maximized
 		else if (minMaxState > 0)
 		{
-debug.write("state: maximized")
+debug.write("s:maximized")
 			; action: decrease width or size vertically
 			if (horizontalSize < 0 || verticalSize)
 			{
-debug.write("   action: restore snapped")
+debug.write("a:restore snapped")
 				this.LastOperation := Operation.RestoredSnapped
 				this.setSnapped(window, mon)
 				if (horizontalSize < 0)
@@ -148,7 +159,7 @@ debug.write("   action: restore snapped")
 			; action: horizontal move
 			else if (horizontalDirection)
 			{
-debug.write("   action: move horizontal wrap")
+debug.write("a:move horizontal wrap")
 				this.LastOperation := Operation.Moved
 				if (horizontalDirection < 0)
 				{
@@ -160,13 +171,13 @@ debug.write("   action: move horizontal wrap")
 				}
 			}
 			; action: anything else
-			return
+			return debug.end()
 		}
 		
 		; state: snapped
 		else if (window.snapped == 1)
 		{
-debug.write("state: snapped")
+debug.write("s:snapped")
 			;  state: width == max - 1 && height == max
 			; action: increase width
 			; or state: width == max && height == max - 1 with top edge touching monitor edge
@@ -178,10 +189,10 @@ debug.write("state: snapped")
 					&& ((window.grid.top == 0 && verticalSize < 0)
 					 || (window.grid.top == 1 && verticalSize > 0))))
 			{
-debug.write("   action: maximize")
+debug.write("a:maximize")
 				this.LastOperation := Operation.Maximized
 				WinMaximize, % "ahk_id " window.handle
-				return
+				return debug.end()
 			}
 			
 			; state: width == 1
@@ -190,13 +201,13 @@ debug.write("   action: maximize")
 				; action: decrease width
 				if (horizontalSize < 0)
 				{
-debug.write("   action: restore unsnapped")
+debug.write("a:restore unsnapped")
 					window.snapped := 0
 					WinMove, % "ahk_id " window.handle, , window.restoredpos.left   * mon.workarea.w + mon.workarea.x
 																	, window.restoredpos.top    * mon.workarea.h + mon.workarea.y
 																	, window.restoredpos.width  * mon.workarea.w
 																	, window.restoredpos.height * mon.workarea.h ; "restore" from snapped state
-					return
+					return debug.end()
 				}
 				; action: anything else
 				; (continue)
@@ -212,12 +223,12 @@ debug.write("   action: restore unsnapped")
 				if ((window.grid.top == 0 && verticalSize > 0) || (window.grid.top == this.settings.verticalSections - 1 && verticalSize < 0))
 				{
 					; (do nothing)
-					return
+					return debug.end()
 				}
 			}
 			
 			; action: all
-debug.write("   action: " (horizontalDirection ? "move horizontal" : horizontalSize ? "resize horizontal" : verticalDirection ? "move vertical" : verticalSize ? "resize vertical" : "snap"))
+debug.write("a:" (horizontalDirection ? "move horizontal" : horizontalSize ? "resize horizontal" : verticalDirection ? "move vertical" : verticalSize ? "resize vertical" : "snap"))
 			this.LastOperation := Operation.Moved
 			window.grid.left := window.grid.left + horizontalDirection
 			window.grid.left := window.grid.left + (horizontalSize < 0 && window.grid.left != 0 && window.grid.left + window.grid.width >= this.settings.horizontalSections ? 1 : 0) ; keep right edge attached to monitor edge if shrinking
@@ -230,43 +241,43 @@ debug.write("   action: " (horizontalDirection ? "move horizontal" : horizontalS
 			; action: move left
 			if (horizontalDirection < 0 && window.grid.left < 0)
 			{
-debug.write("      wrap")
+debug.write("wrap")
 				window.grid.left := this.settings.horizontalSections - window.grid.width
 				Send, #+{Left}
 				this.moveWindow(window.handle, 0, 0, 0, 0)
-				return
+				return debug.end()
 			}
 			
 			;  state: right side off screen
 			; action: move right
 			if (horizontalDirection > 0 && window.grid.left + window.grid.width > this.settings.horizontalSections)
 			{
-debug.write("      wrap")
+debug.write("wrap")
 				window.grid.left := 0
 				Send, #+{Right}
 				this.moveWindow(window.handle, 0, 0, 0, 0)
-				return
+				return debug.end()
 			}
 		}
 		
 		; state: restored
 		else if (window.snapped == 0)
 		{
-debug.write("state: restored")
+debug.write("s:restored")
 			; action: decrease width
 			if (horizontalSize < 0)
 			{
 				; state: minimizable
 				if (activeWindowStyle & WS.MINIMIZEBOX) ; if window is minimizable
 				{
-debug.write("   action: minimize")
+debug.write("a:minimize")
 					this.minimizeAndKeyWaitLWin()
 				}
-				return
+				return debug.end()
 			}
 			
 			; action: anything else
-debug.write("   action: snap")
+debug.write("a:snap")
 			this.LastOperation := Operation.Snapped
 			this.setSnapped(window, mon)
 ; Snap based on left/right edges and left/right direction pushed
@@ -325,6 +336,7 @@ debug.write("   action: snap")
 		; Move/resize snap
 		newSizePosition := this.gridToSizePosition(window, mon, widthFactor, heightFactor)
 		WinMove, % "ahk_id " window.handle, , newSizePosition.x, newSizePosition.y, newSizePosition.w, newSizePosition.h
+debug.end()
 	}
 	
 	setSnapped(window, mon)
@@ -403,7 +415,6 @@ debug.write("restoredpos: " window.restoredpos.left " " window.restoredpos.top "
 	
 	WinEventProc(hWinEventHook, event, hwnd, idObject, idChild, dwEventThread, dwmsEventTime)
 	{
-debug.write("WinEventProc: " event " " hwnd " " idObject " " idChild)
 		if (hwnd)
 		{
 			index := IndexOf(this.TrackedWindows, hwnd, "handle")
@@ -418,7 +429,9 @@ debug.write("WinEventProc: " event " " hwnd " " idObject " " idChild)
 				; state: snapped and left mouse button down (vs moving with arrow keys)
 				if (window.snapped && leftMouseButtonState == "D")
 				{
-debug.write("state: snapped")
+debug.start()
+debug.write("WinEventProc: " event " " hwnd " " idObject " " idChild)
+debug.write("s:snapped")
 					BlockInput, MouseMove ; user can move mouse faster than we can move window, so clicking later may miss the title bar
 					SetWinDelay, 0
 					SetMouseDelay, 0
@@ -434,7 +447,7 @@ debug.write("state: snapped")
 					monitorId := GetMonitorId(window.handle)
 					mon := new SnapMonitor(monitorId)
 					
-debug.write("   action: drag restore")
+debug.write("a:drag restore")
 					; "restore" width and height from snapped state, set left and top relative to where title bar was grabbed
 					WinMove, % "ahk_id " window.handle, , mouseAbsPosX - (mouseRelPosX / currentWidth) * (window.restoredpos.width * mon.workarea.w)
 																	, mouseAbsPosY - mouseRelPosY
@@ -443,6 +456,7 @@ debug.write("   action: drag restore")
 					
 					Click, down ; grab title bar
 					BlockInput, MouseMoveOff
+debug.end()
 				}
 			}
 		}

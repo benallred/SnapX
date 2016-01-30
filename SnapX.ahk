@@ -45,7 +45,7 @@ SetWorkingDir %A_ScriptDir%  ; Ensures a consistent starting directory.
 
 #Include Modules\Settings.ahk
 #Include Modules\Debug.ahk
-#Include Modules\Updates.ahk
+#Include Modules\UpdateChecker.ahk
 #Include Modules\Tray.ahk
 #Include Modules\Functions.ahk
 #Include Modules\Classes.ahk
@@ -77,7 +77,7 @@ tray := new Tray(settings, Build, updateChecker, snapper)
 
 ; Hotkeys
 
-#If settings.debug
+#If settings.debug > 1
 #`::Reload ; for ease of testing during development
 #~::Run, powershell ; opens PowerShell (for Git) in the current working directory
 #If

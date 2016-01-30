@@ -6,7 +6,7 @@ class Settings
 	static programDescription := "Replacement for Windows/Aero Snap"
 	
 	_debug := 0
-	debug[]
+	debug[fromIniFile = false]
 	{
 		get
 		{
@@ -14,7 +14,14 @@ class Settings
 		}
 		set
 		{
-			this._debug := value
+			if (value != this._debug)
+			{
+				this._debug := value
+				if (!fromIniFile)
+				{
+					this.writeSetting("debug", "Settings")
+				}
+			}
 			return this._debug
 		}
 	}
@@ -161,6 +168,8 @@ class Settings
 	__New()
 	{
 		this.iniFile := this.programTitle ".ini"
+		this.logFile := this.programTitle ".log"
+		
 		firstRun := false
 		
 		IfNotExist % this.iniFile
